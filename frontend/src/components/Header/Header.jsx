@@ -72,10 +72,10 @@ export default function Header() {
             </svg>
           </button> */}
           <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
-            <Heart className="w-5 h-5 inline-block" />
+            <Heart className="w-6 h-5 inline-block" />
           </button>
           <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
-            <ShoppingCart className="w-5 h-5  inline-block" />
+            <ShoppingCart className="w-6 h-5  inline-block" />
           </button>
           <button className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
             Đặt hàng

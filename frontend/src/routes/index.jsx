@@ -14,7 +14,9 @@ import RequiredPermission from "../components/RequiredPermission";
 import { ENDPOINTS } from "./endPoints";
 import LandingLayout from "../layouts/LandingLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
-const WEB_NAME = "LozoAcademy";
+import MainLayout from "../layouts/MainLayout";
+import NotFoundPage from "../modules/error/features";
+const WEB_NAME = "FreshHarvest";
 
 const RequiredAuth = ({ children, path }) => {
   const location = useLocation();
@@ -46,15 +48,27 @@ const delayRoute = (ms = 500) => {
 // Routes configuration
 
 const landingPage = {
-  path: ENDPOINTS.INDEX,
+  path: ENDPOINTS.INDEX.HOME,
   Layout: LandingLayout,
   component: lazy(() => delayRoute()(import("../modules/landing/features"))),
   title: WEB_NAME,
 };
+const contactPage = {
+  path: ENDPOINTS.INDEX.CONTACT,
+  Layout: LandingLayout,
+  component: lazy(() => delayRoute()(import("../modules/contact/features"))),
+  title: `Contact - ${WEB_NAME}`,
+};
+const categoryPage = {
+  path: ENDPOINTS.USER.CATEGORY,
+  Layout: LandingLayout,
+  component: lazy(() => delayRoute()(import("../modules/category/features"))),
+  title: `Category - ${WEB_NAME}`,
+};
 
 // Các trang khác sẽ được thêm vào đây
 export const privateRouteData = [];
-export const publicRoutesData = [landingPage];
+export const publicRoutesData = [landingPage, contactPage, categoryPage];
 
 // Improved route rendering function
 const renderRoutes = (routes, isPrivate = false) => {
@@ -115,6 +129,16 @@ const AppRoutes = () => {
       <Routes>
         {renderRoutes(publicRoutesData)}
         {renderRoutes(privateRouteData, true)}
+        <Route
+          path="*"
+          element={
+            <LandingLayout>
+              <Suspense fallback={<Loading />}>
+                <NotFoundPage />
+              </Suspense>
+            </LandingLayout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -4,17 +4,20 @@ export default function Benefits() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Images */}
-          <div className="relative h-96 md:h-[500px]">
+          <div className="grid grid-cols-5 gap-6 h-96 md:h-[400px]">
+            {/* Image 1 - nhỏ */}
             <img
-              src="https://api.builder.io/api/v1/image/assets/TEMP/ca396986e77d8d65c947e81d493a355d09ff9bf8?width=552"
+              src="https://agriculture-ecommerce.s3.ap-southeast-2.amazonaws.com/farm1.png"
               alt="Fresh produce 1"
-              className="absolute inset-0 w-full h-full object-cover rounded-lg"
+              className="col-span-2 w-full h-2/3 object-cover rounded-2xl mt-8"
             />
-            {/* <img
-                src="https://api.builder.io/api/v1/image/assets/TEMP/0c72dcd351b644b2acfdd8181cdcd74eaa3588c9?width=888"
-                alt="Fresh produce 2"
-                className="absolute bottom-0 right-0 w-3/5 h-2/3 object-cover rounded-lg shadow-lg"
-              /> */}
+
+            {/* Image 2 - to, hình vuông */}
+            <img
+              src="https://agriculture-ecommerce.s3.ap-southeast-2.amazonaws.com/farm2.png"
+              alt="Fresh produce 2"
+              className="col-span-3 aspect-square w-full object-cover rounded-2xl"
+            />
           </div>
 
           {/* Content */}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import Header from "../../../components/Header/Header";
 import Footer from "../../../components/Footer/Footer";
@@ -15,6 +15,8 @@ import img_banner from "../../../assets/images/img_banner.png";
 import { useCategories } from "../../../hooks/useCategories";
 import { useProductGenerals } from "../../../hooks/useProductGenerals";
 import { useProductDetails } from "../../../hooks/useProductDetails";
+import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
+import FlashSale from "../components/FlashSale";
 
 // Animation variants
 const containerVariants = {
@@ -177,30 +179,6 @@ const FLASH_SALE_PRODUCTS = [
   },
 ];
 
-const CATEGORIES = [
-  {
-    name: "Trái cây",
-    image:
-      "https://api.builder.io/api/v1/image/assets/TEMP/5fad70a6f0129d266f022019af621be1cc9e0ef2?width=380",
-  },
-  {
-    name: "Rau củ tươi",
-    image:
-      "https://api.builder.io/api/v1/image/assets/TEMP/23acd9935e919fc17fed40e517bb271ecf04d2be?width=380",
-    featured: true,
-  },
-  {
-    name: "Thịt - Trứng - Cá",
-    image:
-      "https://api.builder.io/api/v1/image/assets/TEMP/b27fa9e4cdb07949197126a35d2d462512b90457?width=380",
-  },
-  {
-    name: "Gạo - Ngũ cốc",
-    image:
-      "https://api.builder.io/api/v1/image/assets/TEMP/25e559fc262dc9cb5490f69d71662222a36d836e?width=380",
-  },
-];
-
 export default function Index() {
   const { data: categories, isLoading: categoriesLoading } = useCategories(
     0,
@@ -214,46 +192,60 @@ export default function Index() {
   );
 
   // Combine product generals with product details for rich product cards
-  const enrichedProducts = (productGenerals || [])
-    .slice(0, 10)
-    .map((product) => {
-      const detail = (productDetails || []).find(
-        (d) => d.productGeneralId === product.productGeneralId
-      );
+  const enrichedProducts = useMemo(() => {
+    if (!productGenerals || !productDetails) return [];
 
-      // Handle image - try to parse photoUrls or use placeholder
-      let imageUrl =
-        "https://via.placeholder.com/300?text=" +
-        encodeURIComponent(product.productName || "Product");
-      if (product.photoUrls) {
+    const generalMap = {};
+    productGenerals.forEach((g) => {
+      generalMap[g.productGeneralId] = g;
+    });
+
+    return productDetails.map((d) => {
+      const general = generalMap[d.productGeneralId];
+
+      let imageUrl = "";
+      if (general?.photoUrls) {
         try {
-          const parsedUrls = JSON.parse(product.photoUrls);
-          if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
-            imageUrl = parsedUrls[0];
-          }
-        } catch (e) {
-          // photoUrls is not valid JSON, use placeholder
+          const parsed = JSON.parse(general.photoUrls);
+          imageUrl = parsed?.[0];
+        } catch {
+          imageUrl = general.photoUrls;
         }
       }
 
       return {
-        id: product.productGeneralId,
-        name: product.productName,
-        price: detail?.price || 0,
-        originalPrice: Math.round((detail?.price || 0) * 1.2),
+        id: d.productDetailId,
+        name: general?.productName,
+        description: d.description,
+        currentPrice: d.price,
+        originalPrice: Math.round(d.price * 1.3),
+        rating: 4.8,
+        discount: Math.round(((1.3 - 1) / 1.3) * 100),
         image: imageUrl,
-        rating: 4.9,
-        discount: 15,
-        badges: ["Hàng mới", "Bán chạy"],
-        status: product.status,
-        quantity: detail?.quantityAvailable || 0,
+        quantityAvailable: d.quantityAvailable,
+        isNew: true,
+        isBestSeller: true,
+        vendorImage: null,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
       };
     });
+  }, [productGenerals, productDetails]);
+  const newestProducts = useMemo(() => {
+    return [...enrichedProducts]
+      .sort((a, b) => {
+        const timeA = new Date(a.updatedAt || a.createdAt).getTime();
+        const timeB = new Date(b.updatedAt || b.createdAt).getTime();
+        return timeB - timeA; // mới nhất lên đầu
+      })
+      .slice(0, 5); //  CHỈ LẤY 5 SẢN PHẨM
+  }, [enrichedProducts]);
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
       <Navigation />
+      <Breadcrumbs items={[{ label: "Trang chủ" }]} />
       <HeroSection />
       {/* <FeaturedProducts />
       <Categories /> */}
@@ -305,7 +297,7 @@ export default function Index() {
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
             >
-              {enrichedProducts.map((product) => (
+              {newestProducts.map((product) => (
                 <ProductCard key={product.id} {...product} />
               ))}
             </motion.div>
@@ -314,6 +306,8 @@ export default function Index() {
           )}
         </div>
       </section>
+
+      <FlashSale />
 
       {/* Categories Section */}
       <section className="py-16 md:py-24 bg-white">
@@ -358,7 +352,7 @@ export default function Index() {
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
             >
-              {(categories || []).slice(0, 4).map((category, idx) => (
+              {(categories || []).slice(0, 8).map((category, idx) => (
                 <motion.div
                   key={idx}
                   className="rounded-2xl overflow-hidden border-2 border-gray-200 hover:border-green-600 bg-white transition-all shadow-md hover:shadow-xl cursor-pointer"

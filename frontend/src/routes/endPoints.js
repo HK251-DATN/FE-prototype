@@ -5,8 +5,13 @@ export const ENDPOINTS = Object.freeze({
     SIGNIN: "/signin",
     SIGNIN_SUCCESS: "/signin-success",
   },
-  INDEX: "/",
+  INDEX: {
+    HOME: "/",
+    ABOUT: "/about",
+    CONTACT: "/contact",
+  },
   USER: {
     DASHBOARD: "/user/dashboard",
+    CATEGORY: "/user/category",
   },
 });

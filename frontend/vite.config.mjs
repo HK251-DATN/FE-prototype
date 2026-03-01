@@ -14,11 +14,5 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false,
-    proxy: {
-      "/images": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-    },
   },
 });

@@ -1,8 +1,43 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import CategoryMenu from "../CategorySidebar/CategoryMenu";
+import { Sidebar } from "../CategorySidebar/Sidebar";
 // Nếu bạn dùng thư viện icon như lucide-react, hãy import:
 // import { Menu, ChevronDown, Phone } from "lucide-react";
 
 export default function Navigation() {
+  const [openCategory, setOpenCategory] = useState(false);
+  const [openPromotion, setOpenPromotion] = useState(false);
+  const categoryRef = useRef(null);
+  const promotionRef = useRef(null);
+  const toggleCategory = () => {
+    setOpenCategory((prev) => !prev);
+    setOpenPromotion(false);
+  };
+  const togglePromotion = () => {
+    setOpenPromotion((prev) => !prev);
+    setOpenCategory(false);
+  };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setOpenCategory(false);
+      }
+      if (
+        promotionRef.current &&
+        !promotionRef.current.contains(event.target)
+      ) {
+        setOpenPromotion(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
     // 1. Nền tổng thể màu xám nhạt (bg-gray-100)
     <div className="bg-gray-100 border-b border-gray-200">
@@ -10,7 +45,11 @@ export default function Navigation() {
         {/* --- Phần bên trái: Danh mục & Menu --- */}
         <div className="flex items-center">
           {/* 2. Mục "Danh mục sản phẩm": Nền xanh, chữ trắng, padding lớn */}
-          <div className="bg-green-600 text-white px-6 py-3 flex items-center gap-2 cursor-pointer hover:bg-green-700 transition-colors">
+          <div
+            onClick={toggleCategory}
+            ref={categoryRef}
+            className="relative bg-green-600 text-white px-6 py-3 flex items-center gap-2 cursor-pointer hover:bg-green-700 transition-colors"
+          >
             {/* Menu Icon */}
             <svg
               width="20"
@@ -27,6 +66,8 @@ export default function Navigation() {
             <span className="font-medium">Danh mục sản phẩm</span>
             {/* Chevron Icon */}
             <svg
+              className={`w-4 h-4 transition-transform ${openCategory ? "rotate-180" : ""
+                }`}
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -36,6 +77,12 @@ export default function Navigation() {
             >
               <path d="m6 9 6 6 6-6" />
             </svg>
+            {/* DROPDOWN CATEGORY */}
+            {openCategory && (
+              <div className="absolute left-0 top-full z-50 mt-1">
+                <CategoryMenu />
+              </div>
+            )}
           </div>
 
           {/* 3. Navigation Links: Nằm bên cạnh khối danh mục */}
@@ -52,6 +99,8 @@ export default function Navigation() {
             <div className="flex items-center gap-1 text-gray-600 hover:text-green-600 cursor-pointer transition-colors">
               Khuyến mãi sốc
               <svg
+                className={`w-4 h-4 transition-transform ${openCategory ? "rotate-180" : ""
+                  }`}
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -61,6 +110,10 @@ export default function Navigation() {
               >
                 <path d="m6 9 6 6 6-6" />
               </svg>
+              {openCategory && (
+                <Sidebar />
+
+              )}
             </div>
 
             <a
@@ -85,7 +138,7 @@ export default function Navigation() {
             </a>
 
             <a
-              href="#contact"
+              href="/user/contact"
               className="text-gray-600 hover:text-green-600 transition-colors"
             >
               Liên hệ
