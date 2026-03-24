@@ -16,8 +16,8 @@ const NotFoundContent = () => {
             </h2>
 
             <p className="text-gray-500 mb-8 leading-relaxed text-base md:text-lg">
-              Rất tiếc! Trang bạn tìm kiếm không tồn tại hoặc đã bị di chuyển.
-              Hãy quay lại để tiếp tục chọn mua nông sản tươi ngon nhé!
+              Rất tiếc! Trang bạn tìm kiếm không tồn tại. Hãy quay lại để tiếp
+              tục chọn mua nông sản tươi ngon nhé!
             </p>
 
             <a

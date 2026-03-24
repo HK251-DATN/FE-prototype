@@ -1,18 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useCategories } from "../../hooks/useCategories";
 
 const CategoryMenu = () => {
-  const [categories, setCategories] = useState([]);
-  const [openCategories, setOpenCategories] = useState({});
   const navigate = useNavigate();
-  useEffect(() => {
-    fetch("http://localhost:8080/api/categories?page=0&size=20")
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(buildCategoryTree(data));
-      });
-  }, []);
+  const [openCategories, setOpenCategories] = useState({});
+  const { data: categories = [], isLoading, isError } = useCategories();
 
   const toggleCategory = (id) => {
     setOpenCategories((prev) => ({
@@ -21,59 +15,85 @@ const CategoryMenu = () => {
     }));
   };
 
+  const handleNavigation = (id) => {
+    navigate(`/category?category=${id}`);
+  };
+
+  if (isLoading)
+    return (
+      <div className="p-4 text-sm text-gray-500">Đang tải danh mục...</div>
+    );
+  if (isError)
+    return (
+      <div className="p-4 text-sm text-red-500">Không thể tải dữ liệu.</div>
+    );
+
   return (
-    <aside className="w-64 bg-white border text-black rounded-lg p-4">
-      <ul className="space-y-2">
+    <aside className="w-64 bg-white border border-gray-200 text-black rounded-lg p-4 shadow-sm">
+      <ul className="space-y-1">
         {categories.map((category) => {
-          const hasChildren = category.children.length > 0;
-          const isOpen = openCategories[category.categoryId];
+          const hasChildren = category.subs && category.subs.length > 0;
+          const isOpen = openCategories[category.id];
 
           return (
-            <li key={category.categoryId}>
-              {/* CATEGORY CHA */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // NGĂN click nổi lên
-                  if (hasChildren) {
-                    toggleCategory(category.categoryId);
-                  } else {
-                    navigate(
-                      `/user/category/user/category?category=${category.categoryId}`
-                    );
-                  }
-                }}
-                className="flex items-center justify-between w-full text-left px-2 py-2 rounded hover:bg-green-100"
+            <li key={category.id} className="select-none">
+              {/* CATEGORY CHA - Container chính */}
+              <div
+                className={`flex items-center justify-between w-full rounded-md transition-colors ${
+                  isOpen ? "bg-green-50" : "hover:bg-gray-50"
+                }`}
               >
-                <span className="flex items-center gap-2">
+                {/* PHẦN 1: TEXT VÀ ICON - Nhấn vào đây luôn chuyển trang */}
+                <div
+                  onClick={() => handleNavigation(category.id)}
+                  className="flex items-center gap-3 flex-grow px-3 py-2.5 cursor-pointer"
+                >
                   {category.iconUrl && (
-                    <img src={category.iconUrl} alt="" className="w-5 h-5" />
+                    <img
+                      src={category.iconUrl}
+                      alt={category.name}
+                      className="w-5 h-5 object-contain"
+                    />
                   )}
-                  {category.categoryName}
-                </span>
+                  <span
+                    className={`text-sm font-medium ${isOpen ? "text-green-700" : "text-gray-800"}`}
+                  >
+                    {category.name}
+                  </span>
+                </div>
 
-                {hasChildren &&
-                  (isOpen ? (
-                    <ChevronDown size={18} />
-                  ) : (
-                    <ChevronRight size={18} />
-                  ))}
-              </button>
+                {/* PHẦN 2: NÚT MŨI TÊN - Chỉ xuất hiện nếu có con, nhấn vào đây để Đóng/Mở */}
+                {hasChildren && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
+                      toggleCategory(category.id);
+                    }}
+                    className="p-2.5 hover:bg-green-100 rounded-md transition-colors text-gray-500"
+                  >
+                    {isOpen ? (
+                      <ChevronDown size={16} />
+                    ) : (
+                      <ChevronRight size={16} />
+                    )}
+                  </button>
+                )}
+              </div>
 
-              {/* CATEGORY CON */}
+              {/* CATEGORY CON - Giữ nguyên logic hiển thị */}
               {hasChildren && isOpen && (
-                <ul className="ml-6 mt-2 space-y-1">
-                  {category.children.map((child) => (
-                    <li
-                      key={child.categoryId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/user/category?category=${child.categoryId}`);
-                      }}
-                      className="px-2 py-1 text-sm text-gray-700 rounded hover:bg-green-100 cursor-pointer"
-                    >
-                      {child.categoryName}
-                    </li>
-                  ))}
+                <ul className="ml-9 mt-1 space-y-1 border-l border-gray-100">
+                  {category.subs
+                    .sort((a, b) => a.displayOrder - b.displayOrder)
+                    .map((sub) => (
+                      <li
+                        key={sub.id}
+                        onClick={() => handleNavigation(sub.id)}
+                        className="px-4 py-1.5 text-sm text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-r-md cursor-pointer transition-all"
+                      >
+                        {sub.name}
+                      </li>
+                    ))}
                 </ul>
               )}
             </li>
@@ -82,20 +102,6 @@ const CategoryMenu = () => {
       </ul>
     </aside>
   );
-};
-
-// ================= helper =================
-
-const buildCategoryTree = (categories) => {
-  const parents = categories.filter((c) => c.isSubCategory === "false");
-
-  return parents.map((parent) => ({
-    ...parent,
-    children: categories.filter(
-      (c) =>
-        c.isSubCategory === "true" && c.belongToCategory === parent.categoryId
-    ),
-  }));
 };
 
 export default CategoryMenu;

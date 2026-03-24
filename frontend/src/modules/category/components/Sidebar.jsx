@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-const Sidebar = ({ onFilterChange }) => {
+const Sidebar = ({ onFilterChange, filters = {} }) => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
@@ -9,10 +9,17 @@ const Sidebar = ({ onFilterChange }) => {
     tags: true,
   });
 
-  const [selectedCategory, setSelectedCategory] = useState("culinary");
-  const [priceRange, setPriceRange] = useState([5000, 500000]);
-  const [selectedRatings, setSelectedRatings] = useState([4]);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(
+    filters.categoryId || 0,
+  );
+  const [priceRange, setPriceRange] = useState([
+    filters.minPrice || 0,
+    filters.maxPrice || 500000,
+  ]);
+  const [selectedRatings, setSelectedRatings] = useState(
+    filters.selectedRatings || [],
+  );
+  const [selectedTags, setSelectedTags] = useState(filters.searchTags || []);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -21,9 +28,61 @@ const Sidebar = ({ onFilterChange }) => {
     }));
   };
 
+  const handleCategoryChange = (catId) => {
+    setSelectedCategory(catId);
+    if (onFilterChange) {
+      onFilterChange({
+        categoryId: parseInt(catId),
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        selectedRatings,
+        searchTags: selectedTags,
+      });
+    }
+  };
+
+  const handleRatingChange = (newRatings) => {
+    setSelectedRatings(newRatings);
+    if (onFilterChange) {
+      onFilterChange({
+        categoryId: selectedCategory,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        selectedRatings: newRatings,
+        searchTags: selectedTags,
+      });
+    }
+  };
+
+  const handleTagChange = (newTags) => {
+    setSelectedTags(newTags);
+    if (onFilterChange) {
+      onFilterChange({
+        categoryId: selectedCategory,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        selectedRatings,
+        searchTags: newTags,
+      });
+    }
+  };
+
+  const handlePriceChange = (newPrice) => {
+    setPriceRange(newPrice);
+    if (onFilterChange) {
+      onFilterChange({
+        categoryId: selectedCategory,
+        minPrice: newPrice[0],
+        maxPrice: newPrice[1],
+        selectedRatings,
+        searchTags: selectedTags,
+      });
+    }
+  };
+
   const categories = [
-    { id: "leaf", label: "Rau lá", count: 134 },
-    { id: "culinary", label: "Củ, quả", count: 150 },
+    { id: "leaf", label: "Rau lá" },
+    { id: "culinary", label: "Củ, quả" },
   ];
 
   const tags = [
@@ -62,7 +121,7 @@ const Sidebar = ({ onFilterChange }) => {
       </button>
 
       {/* Categories Section */}
-      <div className="border-b border-gray-200 pb-6 mb-6">
+      {/* <div className="border-b border-gray-200 pb-6 mb-6">
         <button
           onClick={() => toggleSection("categories")}
           className="w-full flex justify-between items-center mb-4"
@@ -89,20 +148,18 @@ const Sidebar = ({ onFilterChange }) => {
                   name="category"
                   value={cat.id}
                   checked={selectedCategory === cat.id}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="w-5 h-5"
                 />
                 <span className="text-sm text-gray-800 font-poppins">
                   {cat.label}
                 </span>
-                <span className="text-sm text-gray-500 font-poppins">
-                  ({cat.count})
-                </span>
+              
               </label>
             ))}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Price Section */}
       <div className="border-b border-gray-200 pb-6 mb-6">
@@ -122,16 +179,30 @@ const Sidebar = ({ onFilterChange }) => {
 
         {expandedSections.price && (
           <div className="space-y-4">
-            <div className="flex gap-2 items-center">
-              <div className="flex-1 h-1 bg-gray-300 rounded-full relative">
-                <div
-                  className="absolute h-1 bg-primary rounded-full"
-                  style={{ width: "42%" }}
-                ></div>
-              </div>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={priceRange[0]}
+                onChange={(e) =>
+                  handlePriceChange([parseInt(e.target.value), priceRange[1]])
+                }
+                className="w-1/2 px-2 py-1 border border-gray-300 rounded text-sm"
+                placeholder="Min"
+              />
+              <input
+                type="number"
+                value={priceRange[1]}
+                onChange={(e) =>
+                  handlePriceChange([priceRange[0], parseInt(e.target.value)])
+                }
+                className="w-1/2 px-2 py-1 border border-gray-300 rounded text-sm"
+                placeholder="Max"
+              />
             </div>
             <div className="text-sm text-gray-700 font-poppins">
-              <span className="font-semibold">Từ:</span> 5.000đ — 500.000đ
+              <span className="font-semibold">Từ:</span>{" "}
+              {priceRange[0].toLocaleString()}đ —{" "}
+              {priceRange[1].toLocaleString()}đ
             </div>
           </div>
         )}
@@ -164,13 +235,13 @@ const Sidebar = ({ onFilterChange }) => {
                   type="checkbox"
                   checked={selectedRatings.includes(stars)}
                   onChange={(e) => {
+                    let newRatings;
                     if (e.target.checked) {
-                      setSelectedRatings([...selectedRatings, stars]);
+                      newRatings = [...selectedRatings, stars];
                     } else {
-                      setSelectedRatings(
-                        selectedRatings.filter((r) => r !== stars)
-                      );
+                      newRatings = selectedRatings.filter((r) => r !== stars);
                     }
+                    handleRatingChange(newRatings);
                   }}
                   className="w-5 h-5"
                 />
@@ -219,11 +290,13 @@ const Sidebar = ({ onFilterChange }) => {
               <button
                 key={tag}
                 onClick={() => {
+                  let newTags;
                   if (selectedTags.includes(tag)) {
-                    setSelectedTags(selectedTags.filter((t) => t !== tag));
+                    newTags = selectedTags.filter((t) => t !== tag);
                   } else {
-                    setSelectedTags([...selectedTags, tag]);
+                    newTags = [...selectedTags, tag];
                   }
+                  handleTagChange(newTags);
                 }}
                 className={`px-4 py-2 rounded-full text-sm font-poppins transition-colors ${
                   selectedTags.includes(tag)

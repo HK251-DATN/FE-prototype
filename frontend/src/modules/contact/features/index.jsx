@@ -7,8 +7,6 @@ import Contact from "../components/Contact";
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      <Navigation />
       <Breadcrumbs
         items={[{ label: "Trang chủ", href: "/" }, { label: "Liên hệ" }]}
       />
@@ -19,8 +17,6 @@ export default function ContactPage() {
           <Contact />
         </h1>
       </section>
-
-      <Footer />
     </div>
   );
 }

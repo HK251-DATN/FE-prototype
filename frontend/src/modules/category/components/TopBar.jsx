@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-const TopBar = ({ productCount = 52, onSortChange }) => {
+const TopBar = ({ productCount = 52, onSortChange, filters = {} }) => {
   const [sortBy, setSortBy] = useState("latest");
   const [showSortMenu, setShowSortMenu] = useState(false);
 
@@ -9,22 +9,40 @@ const TopBar = ({ productCount = 52, onSortChange }) => {
     setSortBy(value);
     setShowSortMenu(false);
     if (onSortChange) {
-      onSortChange(value);
+      // Map sort value to API parameters
+      let sortParams = {};
+      switch (value) {
+        case "latest":
+          sortParams = { createdSortOption: "DESC" };
+          break;
+        case "oldest":
+          sortParams = { createdSortOption: "ASC" };
+          break;
+        case "rating":
+          sortParams = { ratingSortOption: "DESC" };
+          break;
+        case "num-rate":
+          sortParams = { numRateSortOption: "DESC" };
+          break;
+        default:
+          break;
+      }
+      onSortChange(value, sortParams);
     }
   };
 
   const sortOptions = [
     { value: "latest", label: "Mới nhất" },
-    { value: "price-low", label: "Giá: Thấp đến Cao" },
-    { value: "price-high", label: "Giá: Cao đến Thấp" },
+    { value: "oldest", label: "Cũ nhất" },
     { value: "rating", label: "Đánh giá cao nhất" },
+    { value: "num-rate", label: "Lượt đánh giá nhiều nhất" },
   ];
 
   return (
     <div className="w-full bg-white mb-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Filter Button */}
-        <button className="hidden sm:flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-green-700 transition-colors">
+        {/* <button className="hidden sm:flex items-center gap-2 bg-primary text-white px-8 py-3 rounded-full font-semibold text-sm hover:bg-green-700 transition-colors">
           <svg
             className="w-5 h-5"
             fill="none"
@@ -39,11 +57,11 @@ const TopBar = ({ productCount = 52, onSortChange }) => {
             />
           </svg>
           Lọc
-        </button>
+        </button> */}
 
         {/* Sort Dropdown */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 font-poppins">
+          <span className="ml-8 text-sm text-gray-500 font-poppins">
             Sắp xếp theo
           </span>
 

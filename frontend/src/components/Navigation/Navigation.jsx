@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import CategoryMenu from "../CategorySidebar/CategoryMenu";
-import { Sidebar } from "../CategorySidebar/Sidebar";
 // Nếu bạn dùng thư viện icon như lucide-react, hãy import:
 // import { Menu, ChevronDown, Phone } from "lucide-react";
 
@@ -66,8 +65,9 @@ export default function Navigation() {
             <span className="font-medium">Danh mục sản phẩm</span>
             {/* Chevron Icon */}
             <svg
-              className={`w-4 h-4 transition-transform ${openCategory ? "rotate-180" : ""
-                }`}
+              className={`w-4 h-4 transition-transform ${
+                openCategory ? "rotate-180" : ""
+              }`}
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -99,8 +99,9 @@ export default function Navigation() {
             <div className="flex items-center gap-1 text-gray-600 hover:text-green-600 cursor-pointer transition-colors">
               Khuyến mãi sốc
               <svg
-                className={`w-4 h-4 transition-transform ${openCategory ? "rotate-180" : ""
-                  }`}
+                className={`w-4 h-4 transition-transform ${
+                  openCategory ? "rotate-180" : ""
+                }`}
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -110,10 +111,7 @@ export default function Navigation() {
               >
                 <path d="m6 9 6 6 6-6" />
               </svg>
-              {openCategory && (
-                <Sidebar />
-
-              )}
+              {openCategory}
             </div>
 
             <a
@@ -131,14 +129,14 @@ export default function Navigation() {
             </a>
 
             <a
-              href="#about"
+              href="/about"
               className="text-gray-600 hover:text-green-600 transition-colors"
             >
               Giới thiệu
             </a>
 
             <a
-              href="/user/contact"
+              href="/contact"
               className="text-gray-600 hover:text-green-600 transition-colors"
             >
               Liên hệ

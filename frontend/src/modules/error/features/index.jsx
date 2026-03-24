@@ -6,11 +6,7 @@ import NotFoundContent from "../components/NotFoundContent";
 export default function NotFoundPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      <Navigation />
       <NotFoundContent />
-
-      <Footer />
     </div>
   );
 }

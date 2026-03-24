@@ -1,7 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import Header from "../../../components/Header/Header";
-import Footer from "../../../components/Footer/Footer";
 import ProductCard from "../components/ProductCard";
 import Navigation from "../../../components/Navigation/Navigation";
 import HeroSection from "../components/HeroSection";
@@ -17,6 +15,7 @@ import { useProductGenerals } from "../../../hooks/useProductGenerals";
 import { useProductDetails } from "../../../hooks/useProductDetails";
 import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
 import FlashSale from "../components/FlashSale";
+import ProductList from "../../../components/ProductList/ProductList";
 
 // Animation variants
 const containerVariants = {
@@ -181,14 +180,14 @@ const FLASH_SALE_PRODUCTS = [
 
 export default function Index() {
   const { data: categories, isLoading: categoriesLoading } = useCategories(
-    0,
-    10
+    1,
+    20,
   );
   const { data: productGenerals, isLoading: productsLoading } =
-    useProductGenerals(0, 20);
+    useProductGenerals(1, 20);
   const { data: productDetails, isLoading: detailsLoading } = useProductDetails(
-    0,
-    100
+    1,
+    100,
   );
 
   // Combine product generals with product details for rich product cards
@@ -242,9 +241,7 @@ export default function Index() {
   }, [enrichedProducts]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <Navigation />
+    <div className="min-h-screen bg-gray-50">
       <Breadcrumbs items={[{ label: "Trang chủ" }]} />
       <HeroSection />
       {/* <FeaturedProducts />
@@ -381,11 +378,10 @@ export default function Index() {
       </section>
 
       <ProcessSection />
+      <ProductList />
       <Benefits />
       <Testimonials />
       <Blog />
-
-      <Footer />
     </div>
   );
 }

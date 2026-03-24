@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import ProductCard from "../components/ProductCard";
+import { useSearchParams } from "react-router-dom";
+import { useProductSearch } from "../../../hooks/useProductSearch";
+import ProductList from "../../../components/ProductList/ProductList";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
-import { Menu, X } from "lucide-react";
-import Footer from "../../../components/Footer/Footer";
-import Header from "../../../components/Header/Header";
-import Navigation from "../../../components/Navigation/Navigation";
+
 import Breadcrumbs from "../../../components/Breadcrumbs/Breadcrumbs";
+import { useCategories } from "../../../hooks/useCategories";
 
 const mockProducts = [
   {
@@ -108,132 +108,183 @@ const mockProducts = [
 ];
 
 export default function Index() {
-  const [sortType, setSortType] = useState("latest");
+  const [searchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const sortedProducts = useMemo(() => {
-    const cloned = [...products];
 
-    switch (sortType) {
-      case "price-low":
-        return cloned.sort((a, b) => a.currentPrice - b.currentPrice);
+  // Lấy categoryId từ URL
+  const rawCategoryId = searchParams.get("category");
+  const currentCategoryId = isNaN(Number(rawCategoryId))
+    ? 0
+    : Number(rawCategoryId);
 
-      case "price-high":
-        return cloned.sort((a, b) => b.currentPrice - a.currentPrice);
+  // 1. STATE CHO CÁC BỘ LỌC TỪ SIDEBAR
+  const [filters, setFilters] = useState({
+    categoryId: currentCategoryId,
+    minPrice: 0,
+    maxPrice: 500000,
+    selectedRatings: [],
+    searchTags: [],
+  });
 
-      case "rating":
-        return cloned.sort((a, b) => b.rating - a.rating);
+  // 2. STATE CHO PHÂN TRANG
+  const [page, setPage] = useState(1);
+  const size = 20;
 
-      case "latest":
-      default:
-        // hiện chưa có createdAt → giữ nguyên thứ tự backend trả về
-        return cloned;
-    }
-  }, [products, sortType]);
+  // 3. STATE CHO SẮP XẾP
+  const [sortParams, setSortParams] = useState({
+    createdSortOption: "DESC",
+    ratingSortOption: "",
+    numRateSortOption: "",
+  });
 
+  // Cập nhật categoryId khi URL thay đổi
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const [generalRes, detailRes] = await Promise.all([
-          fetch("http://localhost:8080/api/product-generals?page=0&size=20"),
-          fetch("http://localhost:8080/api/product-details?page=0&size=20"),
-        ]);
+    setFilters((prev) => ({
+      ...prev,
+      categoryId: currentCategoryId,
+    }));
+  }, [currentCategoryId]);
 
-        const generals = await generalRes.json();
-        const details = await detailRes.json();
+  // 4. XỬ LÝ KHI SIDEBAR FILTER THAY ĐỔI
+  const handleFilterChange = (newFilters) => {
+    setFilters({
+      categoryId: newFilters.categoryId,
+      minPrice: newFilters.minPrice,
+      maxPrice: newFilters.maxPrice,
+      selectedRatings: newFilters.selectedRatings,
+      searchTags: newFilters.searchTags,
+    });
+    setPage(1); // Reset về trang 1 khi filter thay đổi
+  };
 
-        // Map productGeneralId -> productGeneral
-        const generalMap = {};
-        generals.forEach((g) => {
-          generalMap[g.productGeneralId] = g;
-        });
+  // 5. XỬ LÝ KHI SORT THAY ĐỔI
+  const handleSortChange = (sortValue, sortParamsObj) => {
+    setSortParams(sortParamsObj);
+    setPage(1); // Reset về trang 1 khi sort thay đổi
+  };
 
-        // Mỗi PRODUCT DETAIL = 1 CARD
-        const mappedProducts = details.map((d) => {
-          const general = generalMap[d.productGeneralId];
+  // 6. MAPPING RATING FILTERS ĐỂ GỬI ĐẾN API
+  // Nếu selectedRatings = [5, 4, 3], thì min = 3, max = 5
+  const getRatingRange = () => {
+    if (filters.selectedRatings.length === 0) {
+      return { minRating: 0, maxRating: 5 };
+    }
+    const min = Math.min(...filters.selectedRatings);
+    const max = Math.max(...filters.selectedRatings);
+    return { minRating: min, maxRating: max };
+  };
 
-          return {
-            id: d.productDetailId,
-            image: general?.photoUrls,
-            name: general?.productName,
-            description: d.description,
-            currentPrice: d.price,
-            originalPrice: d.price * 1.3, //tạm hardcode, sau này thêm db sau
-            rating: 4.5, // tạm hardcode, sau này lấy từ review
-            discount: Math.round(
-              ((d.price * 1.3 - d.price) / (d.price * 1.3)) * 100
-            ),
-            // quantityAvailable: d.quantityAvailable,
-            vendorImage: null, // sau này gắn vendor
-          };
-        });
+  const ratingRange = getRatingRange();
 
-        setProducts(mappedProducts);
-      } catch (error) {
-        console.error("Fetch products error:", error);
-      } finally {
-        setLoading(false);
+  // 7. GỌI SEARCH API VỚI TẤT CẢ FILTERS
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+  } = useProductSearch({
+    categoryId: filters.categoryId,
+    productGeneralId: 0,
+    searchString: "",
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    minRating: ratingRange.minRating,
+    maxRating: ratingRange.maxRating,
+    minNumRate: 0,
+    maxNumRate: 0,
+    searchTags: filters.searchTags,
+    createdSortOption: sortParams.createdSortOption,
+    ratingSortOption: sortParams.ratingSortOption,
+    numRateSortOption: sortParams.numRateSortOption,
+    page,
+    size,
+  });
+
+  const { data: categories = [] } = useCategories();
+
+  // 8. LOGIC TÌM KIẾM ĐƯỜNG DẪN DANH MỤC
+  const dynamicBreadcrumbs = useMemo(() => {
+    const baseItems = [{ label: "Danh mục sản phẩm", href: "/category" }];
+
+    if (!currentCategoryId || categories.length === 0) return baseItems;
+
+    for (const parent of categories) {
+      if (parent.id === currentCategoryId) {
+        return [...baseItems, { label: parent.name }];
       }
-    };
 
-    fetchProducts();
-  }, []);
+      const subCategory = parent.subs?.find(
+        (sub) => sub.id === currentCategoryId,
+      );
+      if (subCategory) {
+        return [
+          ...baseItems,
+          { label: parent.name, href: `/category?category=${parent.id}` },
+          { label: subCategory.name },
+        ];
+      }
+    }
+
+    return baseItems;
+  }, [categories, currentCategoryId]);
 
   return (
     <div className="min-h-screen bg-white font-poppins">
-      <Header />
-      <Navigation />
-      <Breadcrumbs
-        items={[
-          { label: "Trang chủ", href: "/" },
-          { label: "Danh mục sản phẩm", href: "/user/category" },
-          { label: "Rau củ quả tươi" },
-        ]}
-      />
+      <Breadcrumbs customItems={dynamicBreadcrumbs} />
       <main className="container mx-auto px-4 py-8">
         {/* Mobile Sidebar */}
         {sidebarOpen && (
           <div className="md:hidden mb-8">
-            <Sidebar />
+            <Sidebar onFilterChange={handleFilterChange} filters={filters} />
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="mt-4 text-sm text-primary font-semibold"
+            >
+              Đóng bộ lọc
+            </button>
           </div>
         )}
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block lg:w-72 flex-shrink-0">
-            <Sidebar />
+            <Sidebar onFilterChange={handleFilterChange} filters={filters} />
           </aside>
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* Top Bar */}
             <TopBar
-              productCount={sortedProducts.length}
-              onSortChange={setSortType}
+              productCount={products.length}
+              onSortChange={handleSortChange}
+              filters={filters}
             />
 
             {/* Product Grid */}
-            {loading ? (
+            {isLoading ? (
               <div className="text-center py-20">Đang tải sản phẩm...</div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {sortedProducts.map((product) => (
-                  <ProductCard key={product.id} {...product} />
-                ))}
+            ) : isError ? (
+              <div className="text-center py-20 text-red-500">
+                Lỗi kết nối server.
               </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-20 text-gray-500">
+                Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.
+              </div>
+            ) : (
+              <ProductList products={products} />
             )}
+
             {/* Load More Button */}
-            <div className="flex justify-center mt-12">
-              <button className="bg-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-colors">
-                Xem thêm
-              </button>
-            </div>
+            {/* {products.length > 0 && (
+              <div className="flex justify-center mt-12">
+                <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-full font-bold transition-all shadow-md active:scale-95">
+                  Xem thêm sản phẩm
+                </button>
+              </div>
+            )} */}
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -9,9 +9,21 @@ export const ENDPOINTS = Object.freeze({
     HOME: "/",
     ABOUT: "/about",
     CONTACT: "/contact",
+    CATEGORY: "/category",
+    PRODUCT_DETAIL: "/product",
   },
   USER: {
     DASHBOARD: "/user/dashboard",
-    CATEGORY: "/user/category",
+    PROFILE: "/user/profile",
+    CART: "/user/cart",
+    ORDER: "/user/order",
+    PAYMENT_SUCCESS: "/user/payment-success",
+    WISHLIST: "/user/wishlist",
+  },
+  ADMIN: {
+    DASHBOARD: "/admin/dashboard",
+    USERS: "/admin/users",
+    GROUPS: "/admin/groups",
+    PERMISSIONS: "/admin/permissions",
   },
 });

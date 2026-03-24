@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { ConfigProvider } from "antd";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { store } from "./store";
+import store from "./store";
 import { Provider } from "react-redux";
 import WebFont from "webfontloader";
 import "antd/dist/reset.css";
@@ -40,5 +40,5 @@ root.render(
         <App />
       </ConfigProvider>
     </QueryClientProvider>
-  </Provider>
+  </Provider>,
 );
