@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useCategories } from "../../../../hooks/useCategories";
 
 export default function CategoriesSection() {
-  const { data: categories, isLoading } = useCategories(0, 10);
+  const { data: categories, isLoading } = useCategories(1, 20);
 
   if (isLoading) return <p className="text-center">Đang tải...</p>;
 

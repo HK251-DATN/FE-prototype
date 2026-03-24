@@ -25,6 +25,7 @@ export default function Footer() {
           {/* Tài khoản */}
           <div>
             <h3 className="font-semibold mb-4 text-white">Tài khoản</h3>
+            <hr className="border-green-700 mb-4 w-8 border-t-2" />
             <ul className="space-y-2">
               <li>
                 <a
@@ -64,6 +65,7 @@ export default function Footer() {
           {/* Hỗ trợ */}
           <div>
             <h3 className="font-semibold mb-4 text-white">Hỗ trợ</h3>
+            <hr className="border-green-700 mb-4 w-8 border-t-2" />
             <ul className="space-y-2">
               <li>
                 <a
@@ -102,17 +104,18 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold mb-4 text-white">Liên hệ</h3>
+            <h3 className="font-semibold mb-4 text-white">Liên quan</h3>
+            <hr className="border-green-700 mb-4 w-8 border-t-2" />
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Email: hello@freshharvest.vn</li>
-              <li>Hotline: 1800 1234</li>
-              <li>Địa chỉ: TP. Hồ Chí Minh, Việt Nam</li>
+              <li>Khuyến mãi sốc</li>
+              <li>Bán chạy nhất</li>
+              <li>Cẩm nang bếp xanh</li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
-          <p>&copy; 2024 FreshHarvest. All rights reserved.</p>
+          <p>&copy; 2025 FreshHarvest. Tất cả đã được kiểm duyệt.</p>
         </div>
       </div>
     </footer>

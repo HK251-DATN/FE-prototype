@@ -14,7 +14,9 @@ import RequiredPermission from "../components/RequiredPermission";
 import { ENDPOINTS } from "./endPoints";
 import LandingLayout from "../layouts/LandingLayout";
 import DashboardLayout from "../layouts/DashboardLayout";
-const WEB_NAME = "LozoAcademy";
+import MainLayout from "../layouts/MainLayout";
+import NotFoundPage from "../modules/error/features";
+const WEB_NAME = "FreshHarvest";
 
 const RequiredAuth = ({ children, path }) => {
   const location = useLocation();
@@ -39,22 +41,84 @@ const delayRoute = (ms = 500) => {
       (data) =>
         new Promise((resolve) => {
           setTimeout(() => resolve(data), ms);
-        })
+        }),
     );
 };
 
 // Routes configuration
 
 const landingPage = {
-  path: ENDPOINTS.INDEX,
-  Layout: LandingLayout,
+  path: ENDPOINTS.INDEX.HOME,
+  Layout: MainLayout,
   component: lazy(() => delayRoute()(import("../modules/landing/features"))),
   title: WEB_NAME,
+};
+const contactPage = {
+  path: ENDPOINTS.INDEX.CONTACT,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/contact/features"))),
+  title: `Contact - ${WEB_NAME}`,
+};
+const categoryPage = {
+  path: ENDPOINTS.INDEX.CATEGORY,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/category/features"))),
+  title: `Category - ${WEB_NAME}`,
+};
+const productDetailPage = {
+  path: ENDPOINTS.INDEX.PRODUCT_DETAIL,
+  Layout: MainLayout,
+  component: lazy(() =>
+    delayRoute()(import("../modules/productDetail/features")),
+  ),
+  title: `Product Detail - ${WEB_NAME}`,
+};
+const loginPage = {
+  path: ENDPOINTS.AUTH.LOGIN,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/auth/features/Login"))),
+  title: `Login - ${WEB_NAME}`,
+};
+const cartPage = {
+  path: ENDPOINTS.USER.CART,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/cart/features"))),
+  title: `Cart - ${WEB_NAME}`,
+};
+const orderPage = {
+  path: ENDPOINTS.USER.ORDER,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/order/features"))),
+  title: `Order - ${WEB_NAME}`,
+};
+const paymentSuccessPage = {
+  path: ENDPOINTS.USER.PAYMENT_SUCCESS,
+  Layout: MainLayout,
+  component: lazy(() =>
+    delayRoute()(import("../modules/successPayment/features")),
+  ),
+  title: `Payment Success - ${WEB_NAME}`,
+};
+const wishlistPage = {
+  path: ENDPOINTS.USER.WISHLIST,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/wishlist/features"))),
+  title: `Wishlist - ${WEB_NAME}`,
 };
 
 // Các trang khác sẽ được thêm vào đây
 export const privateRouteData = [];
-export const publicRoutesData = [landingPage];
+export const publicRoutesData = [
+  landingPage,
+  contactPage,
+  categoryPage,
+  productDetailPage,
+  loginPage,
+  cartPage,
+  orderPage,
+  paymentSuccessPage,
+  wishlistPage,
+];
 
 // Improved route rendering function
 const renderRoutes = (routes, isPrivate = false) => {
@@ -115,6 +179,16 @@ const AppRoutes = () => {
       <Routes>
         {renderRoutes(publicRoutesData)}
         {renderRoutes(privateRouteData, true)}
+        <Route
+          path="*"
+          element={
+            <LandingLayout>
+              <Suspense fallback={<Loading />}>
+                <NotFoundPage />
+              </Suspense>
+            </LandingLayout>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

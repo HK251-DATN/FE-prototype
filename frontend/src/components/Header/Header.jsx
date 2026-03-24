@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Heart, ShoppingCart } from "lucide-react";
+import { ENDPOINTS } from "../../routes/endPoints";
 
 export default function Header() {
   return (
@@ -71,15 +72,21 @@ export default function Header() {
               <path d="m21 21-4.35-4.35" />
             </svg>
           </button> */}
-          <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
-            <Heart className="w-5 h-5 inline-block" />
-          </button>
-          <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
-            <ShoppingCart className="w-5 h-5  inline-block" />
-          </button>
-          <button className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
-            Đặt hàng
-          </button>
+          <Link to={ENDPOINTS.USER.WISHLIST}>
+            <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
+              <Heart className="w-6 h-5 inline-block" />
+            </button>
+          </Link>
+          <Link to={ENDPOINTS.USER.CART}>
+            <button className="bg-green-600 text-white px-2 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
+              <ShoppingCart className="w-6 h-5  inline-block" />
+            </button>
+          </Link>
+          <Link to={ENDPOINTS.AUTH.LOGIN}>
+            <button className="bg-green-600 text-white px-6 py-2 rounded-full hover:bg-green-700 transition-colors font-medium">
+              Đặt hàng
+            </button>
+          </Link>
         </div>
       </div>
     </header>

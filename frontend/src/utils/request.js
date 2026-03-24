@@ -1,187 +1,55 @@
 import axios from "axios";
-import qs from "qs";
-import { getConfig } from "../configs/getConfig.config";
-import { toast } from "react-toastify";
-import { store } from "../store";
+import store from "../store/index";
 import { logout } from "../store/slices/authSlice";
-import { startLoading, stopLoading } from "../store/slices/loadingSlice";
-const paramsSerializer = (params) =>
-  qs.stringify(params, { arrayFormat: "repeat" });
 
+// Tạo axios instance
 const request = axios.create({
-  paramsSerializer,
+  // baseURL: import.meta.env.VITE_API_ECOMMERCE_URL || "http://localhost:8080",   sửa lại khi sửa cors
+  baseURL: "", // Để trống vì đã cấu hình proxy trong vite.config.mjs
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-export function createRequestInterceptor() {
-  return function interceptor(config) {
-    const { apiUrl } = getConfig();
-
-    config.baseURL = apiUrl;
-
-    const baseConfig = {
-      ...config,
-      headers: { ...config.headers },
-    };
-
-    const token = store.getState().auth.token;
-
-    const { headers } = baseConfig;
-    const newHeaders = {
-      ...headers,
-    };
-    if (token) {
-      newHeaders.Authorization = `Bearer ${token}`;
-    }
-
-    return {
-      ...config,
-      headers: newHeaders,
-    };
-  };
-}
-
-function parseResultsHandler(response) {
-  const { data } = response || {};
-  console.log("Response data:", data);
-  return data?.result || data;
-}
-
-const isResponseError = ({ response }) => {
-  return !!response;
-};
-
-const isServerError = ({ response: { status } }) => {
-  return status >= 500;
-};
-
-const isUserError = ({ response: { status } }) => {
-  return status >= 400 && status < 500;
-};
-
-const isUnauthorized = ({ response: { status } }) => {
-  return status == 401 || status == 403;
-};
-
-const isRequestError = ({ response, request }) => {
-  return !response && !!request;
-};
-
-export function displayErrorMessage(errorMsg) {
-  if (typeof errorMsg === "string" && errorMsg.includes("Uncategorized")) {
-    return;
-  }
-  return toast.error(errorMsg);
-}
-export function displaySuccessMessage(errorMsg) {
-  return toast.success(errorMsg);
-}
-
-function getErrorDetails(error) {
-  let errorMessage;
-  const { response } = error;
-
-  errorMessage =
-    (response && response.data && response.data.message) ||
-    response.data.description ||
-    response.data.error_description ||
-    response.statusText;
-
-  return errorMessage;
-}
-
-function serverErrorHandler(error, next) {
-  if (!isResponseError(error) || !isServerError(error)) {
-    return next();
-  }
-  const errorMsg = getErrorDetails(error);
-  return displayErrorMessage(errorMsg);
-}
-
-function userErrorHandler(error, next) {
-  if (!isResponseError(error) || !isUserError(error)) {
-    return next();
-  }
-  const errorMsg = getErrorDetails(error);
-
-  return displayErrorMessage(errorMsg);
-}
-
-function unauthorizedErrorHandler(error, next) {
-  if (isUnauthorized(error)) {
-    // toast.error("Your session has expired. Please login again.");
-    store.dispatch(logout());
-    setTimeout(() => {
-      // window.location.href = "/login";
-    }, 5000);
-  }
-  if (!isResponseError(error) || !isUnauthorized(error)) {
-    return next();
-  }
-  const errorMsg = getErrorDetails(error);
-  return displayErrorMessage(errorMsg);
-}
-
-function requestErrorHandler(error, next) {
-  if (!isRequestError(error)) {
-    return next();
-  }
-  return displayErrorMessage("request failed");
-}
-
-export function createHandlerChain(handlers = []) {
-  return function handlerChain(error) {
-    const stack = [...handlers];
-    function next() {
-      if (stack.length === 0) {
-        return;
-      }
-      const nextHandler = stack.pop();
-      nextHandler(error, next);
-    }
-    next();
-    return Promise.reject(error);
-  };
-}
-
-// request.interceptors.request.use(createRequestInterceptor());
-// request.interceptors.response.use(
-//     parseResultsHandler,
-//     createHandlerChain([
-//         serverErrorHandler,
-//         userErrorHandler,
-//         unauthorizedErrorHandler,
-//         requestErrorHandler,
-//     ])
-// );
-
-// export default request;
-// Request Interceptor: show loading
+// ===== REQUEST INTERCEPTOR =====
+// Tự động thêm token vào header
 request.interceptors.request.use(
   (config) => {
-    store.dispatch(startLoading()); // Show loading
-    return createRequestInterceptor()(config);
+    const token = store.getState().auth?.accessToken;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
   },
-  (error) => {
-    store.dispatch(stopLoading()); // Hide loading if request setup fails
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error),
 );
 
-// Response Interceptor: hide loading
+// ===== RESPONSE INTERCEPTOR =====
 request.interceptors.response.use(
   (response) => {
-    store.dispatch(stopLoading()); // Hide loading on success
-    return parseResultsHandler(response);
+    // TRẢ VỀ TRỰC TIẾP DATA ĐỂ HOOK DỄ DÙNG
+    // Nếu API của bạn luôn bọc trong object, hãy trả về response.data
+    return response.data;
   },
   (error) => {
-    store.dispatch(stopLoading()); // Hide loading on error
-    return createHandlerChain([
-      serverErrorHandler,
-      userErrorHandler,
-      unauthorizedErrorHandler,
-      requestErrorHandler,
-    ])(error);
-  }
+    const status = error.response?.status;
+
+    if (status === 401) {
+      // Chỉ logout khi không phải trang login để tránh loop vô tận
+      if (!window.location.pathname.includes("/auth/login")) {
+        store.dispatch(logout());
+        window.location.href = "/auth/login";
+      }
+    }
+
+    // Ghi log lỗi ra console để bạn dễ debug khi phát triển
+    console.error("API Error:", error.response?.data || error.message);
+
+    return Promise.reject(error);
+  },
 );
 
 export default request;
