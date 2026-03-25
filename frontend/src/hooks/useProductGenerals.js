@@ -9,7 +9,7 @@ export const useProductGenerals = (page = 0, size = 100) => {
   return useQuery({
     queryKey: ["productGenerals", page, size],
     queryFn: async () => {
-      const response = await request.get("/api/product-generals", {
+      const response = await request.get("http://192.168.96.110:9300/api/product-generals", {
         params: {
           page,
           size,
@@ -32,7 +32,7 @@ export const useProductGeneralDetail = (productGeneralId) => {
     queryKey: ["productGeneral", productGeneralId],
     queryFn: async () => {
       const response = await request.get(
-        `/api/product-generals/${productGeneralId}`
+        `http://192.168.96.110:9300/api/product-generals/${productGeneralId}`
       );
       return response;
     },
@@ -53,7 +53,7 @@ export const useProductGeneralsByCategory = (
   return useQuery({
     queryKey: ["productGenerals", "byCategory", categoryId, page, size],
     queryFn: async () => {
-      const response = await request.get("/api/product-generals", {
+      const response = await request.get("http://192.168.96.110:9300/api/product-generals", {
         params: {
           page,
           size,

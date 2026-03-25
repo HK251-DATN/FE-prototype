@@ -14,6 +14,7 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false,
+    host: "0.0.0.0",
     proxy: {
       // Khi React gọi đến /api, Vite sẽ tự động chuyển hướng sang localhost:8080
       "/api": {

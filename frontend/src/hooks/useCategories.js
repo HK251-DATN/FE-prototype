@@ -9,7 +9,7 @@ export const useCategories = (page = 1, size = 20) => {
   return useQuery({
     queryKey: ["categories", page, size],
     queryFn: async () => {
-      const response = await request.get("/api/categories", {
+      const response = await request.get("http://192.168.96.110:9300/api/categories", {
         params: { page, size },
       });
 

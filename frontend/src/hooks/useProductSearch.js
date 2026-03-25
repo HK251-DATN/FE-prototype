@@ -30,7 +30,7 @@ export const useProductSearch = (filters = {}) => {
         size: safeNumber(filters.size, 20),
 
         categoryId: safeNumber(filters.categoryId, 0),
-        productGeneralId: safeNumber(filters.productGeneralId, 0),
+        productGeneralId: safeNumber(filters.productGeneralId, 8),
 
         searchString: filters.searchString || "",
 
@@ -65,7 +65,7 @@ export const useProductSearch = (filters = {}) => {
       const params = cleanParams(rawParams);
 
       // 🔍 Call API
-      const response = await request.get("/api/product-search/", {
+      const response = await request.get("http://192.168.96.110:9300/api/product-search", {
         params,
       });
 

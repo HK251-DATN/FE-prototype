@@ -9,7 +9,7 @@ export const useProductDetails = (page = 0, size = 100) => {
   return useQuery({
     queryKey: ["productDetails", page, size],
     queryFn: async () => {
-      const response = await request.get("/api/product-details", {
+      const response = await request.get("http://192.168.96.110:9300/api/product-details", {
         params: {
           page,
           size,
@@ -32,7 +32,7 @@ export const useProductDetailData = (productDetailId) => {
     queryKey: ["productDetail", productDetailId],
     queryFn: async () => {
       const response = await request.get(
-        `/api/product-details/${productDetailId}`
+        `http://192.168.96.110:9300/api/product-details/${productDetailId}`
       );
       return response;
     },
