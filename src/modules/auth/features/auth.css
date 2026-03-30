@@ -1,0 +1,172 @@
+/* Container chính - căn giữa toàn bộ trang */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f9f9f9; /* Nền xám nhạt */
+  font-family: "Inter", sans-serif; /* Sử dụng font chữ hiện đại */
+}
+
+/* Thẻ card trắng chứa form */
+.auth-card {
+  background: #fff;
+  padding: 40px;
+  border-radius: 16px; /* Bo góc mạnh hơn cho cảm giác hiện đại */
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.04); /* Đổ bóng nhẹ nhàng */
+  width: 100%;
+  max-width: 480px; /* Độ rộng tối đa rộng hơn một chút */
+  text-align: center;
+  border: 1px solid #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* Tiêu đề "Đăng ký" */
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: #1a1a1a;
+  margin-top: 0;
+}
+
+/* Mỗi nhóm ô nhập liệu */
+.form-group {
+  margin-bottom: 16px;
+  position: relative;
+  text-align: left; /* Để placeholder căn trái */
+}
+
+/* Định dạng ô Input */
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px; /* Bo góc nhẹ cho ô input */
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  color: #333;
+}
+
+/* Placeholder khi chưa nhập */
+.auth-input::placeholder {
+  color: #a0a0a0;
+  font-weight: 400;
+}
+
+/* Khi focus vào ô input */
+.auth-input:focus {
+  border-color: #00b100; /* Màu xanh lá đặc trưng */
+  box-shadow: 0 0 0 3px rgba(0, 177, 0, 0.1); /* Hiệu ứng vòng sáng */
+}
+
+/* Nhóm Mật khẩu để chứa Icon con mắt */
+.password-group {
+  position: relative;
+}
+
+/* Icon con mắt */
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+  padding: 5px; /* Tăng vùng nhấn */
+}
+
+.toggle-password:hover {
+  color: #00b100;
+}
+
+/* Khu vực Checkbox điều khoản */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 25px;
+  font-size: 14px;
+  color: #555;
+}
+
+.terms-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Khoảng cách giữa checkbox và chữ */
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+/* Chỉnh một chút input checkbox */
+.terms-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Link điều khoản dịch vụ */
+.terms-link {
+  text-decoration: underline; /* Thêm gạch chân cho link */
+  color: inherit;
+}
+
+.terms-link:hover {
+  color: #00b100;
+}
+
+/* Nút Submit chính */
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background-color: #00b100; /* Màu xanh lá trong ảnh */
+  color: white;
+  border: none;
+  border-radius: 30px; /* Bo tròn mạnh hình viên thuốc */
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(0, 177, 0, 0.15); /* Đổ bóng nhẹ cho nút */
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: #009500; /* Màu đậm hơn khi hover */
+  transform: translateY(-1px); /* Hiệu ứng nổi lên nhẹ */
+  box-shadow: 0 5px 15px rgba(0, 177, 0, 0.2);
+}
+
+.btn-submit:disabled {
+  background-color: #a0d8a0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Footer link để chuyển sang Login */
+.auth-footer {
+  margin-top: 25px;
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 0;
+}
+
+.auth-footer strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.login-link {
+  text-decoration: none;
+  margin-left: 2px;
+}
+
+.login-link:hover strong {
+  color: #00b100;
+}
