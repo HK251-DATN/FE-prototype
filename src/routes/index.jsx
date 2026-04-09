@@ -137,11 +137,11 @@ const cartPage = {
   component: lazy(() => delayRoute()(import("../modules/cart/features"))),
   title: `Cart - ${WEB_NAME}`,
 };
-const orderPage = {
-  path: ENDPOINTS.USER.ORDER,
+const orderingPage = {
+  path: ENDPOINTS.USER.ORDERING,
   Layout: MainLayout,
   component: lazy(() => delayRoute()(import("../modules/order/features"))),
-  title: `Order - ${WEB_NAME}`,
+  title: `Ordering - ${WEB_NAME}`,
 };
 const paymentSuccessPage = {
   path: ENDPOINTS.USER.PAYMENT_SUCCESS,
@@ -163,14 +163,49 @@ const userProfilePage = {
   component: lazy(() => delayRoute()(import("../modules/profile/features"))),
   title: `User Profile - ${WEB_NAME}`,
 };
+const userPasswordPage = {
+  path: ENDPOINTS.USER.PASSWORD,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/profile/features"))),
+  title: `User Password - ${WEB_NAME}`,
+};
+const userAddressPage = {
+  path: ENDPOINTS.USER.ADDRESS,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/profile/features"))),
+  title: `User Address - ${WEB_NAME}`,
+};
+const userOrderPage = {
+  path: ENDPOINTS.USER.ORDER,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/profile/features"))),
+  title: `User Order - ${WEB_NAME}`,
+};
+const userVoucherPage = {
+  path: ENDPOINTS.USER.VOUCHER,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/profile/features"))),
+  title: `User Voucher - ${WEB_NAME}`,
+};
+const userFarmPage = {
+  path: ENDPOINTS.USER.FARM,
+  Layout: MainLayout,
+  component: lazy(() => delayRoute()(import("../modules/profile/features"))),
+  title: `User Farm - ${WEB_NAME}`,
+};
 
 // Các trang khác sẽ được thêm vào đây
 export const privateRouteData = [
   cartPage,
-  orderPage,
+  orderingPage,
   paymentSuccessPage,
   wishlistPage,
   userProfilePage,
+  userPasswordPage,
+  userAddressPage,
+  userOrderPage,
+  userVoucherPage,
+  userFarmPage,
 ];
 export const publicRoutesData = [
   landingPage,

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Star, MapPin, Package, Users } from "lucide-react";
-import { mockFarms } from "@/data/mockData";
+import { mockFarms } from "@/modules/profile/components/account/mockData";
 import { useState } from "react";
 
 const FarmSection = () => {

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import request from "../utils/request";
 
-// 🧹 Helper: loại bỏ param không hợp lệ
+// Helper: loại bỏ param không hợp lệ
 const cleanParams = (params) => {
   return Object.fromEntries(
     Object.entries(params).filter(([_, value]) => {
@@ -13,7 +13,7 @@ const cleanParams = (params) => {
   );
 };
 
-// 🔢 Helper: parse number an toàn
+// Helper: parse number an toàn
 const safeNumber = (value, defaultValue = 0) => {
   const num = Number(value);
   return isNaN(num) ? defaultValue : num;
@@ -24,7 +24,7 @@ export const useProductSearch = (filters = {}) => {
     queryKey: ["product-search", filters],
 
     queryFn: async () => {
-      // 🧱 Build params chuẩn
+      // Build params chuẩn
       const rawParams = {
         page: safeNumber(filters.page, 1),
         size: safeNumber(filters.size, 20),
@@ -38,7 +38,7 @@ export const useProductSearch = (filters = {}) => {
         maxPrice:
           filters.maxPrice && filters.maxPrice > 0
             ? safeNumber(filters.maxPrice)
-            : undefined, // ❗ không gửi nếu = 0
+            : undefined, //  không gửi nếu = 0
 
         minRating: safeNumber(filters.minRating, 0),
         maxRating: safeNumber(filters.maxRating, 5),
@@ -49,7 +49,7 @@ export const useProductSearch = (filters = {}) => {
             ? safeNumber(filters.maxNumRate)
             : undefined,
 
-        // 🏷️ Tags
+        //  Tags
         searchTags:
           Array.isArray(filters.searchTags) && filters.searchTags.length > 0
             ? filters.searchTags.join(",")
@@ -61,11 +61,11 @@ export const useProductSearch = (filters = {}) => {
         numRateSortOption: filters.numRateSortOption || undefined,
       };
 
-      // 🧹 Clean params trước khi gửi
+      // Clean params trước khi gửi
       const params = cleanParams(rawParams);
 
-      // 🔍 Call API
-      const response = await request.get("/api/product-search/", {
+      // Call API
+      const response = await request.get("/api/product-search", {
         params,
       });
 
@@ -75,7 +75,7 @@ export const useProductSearch = (filters = {}) => {
     keepPreviousData: true,
     staleTime: 1000 * 60 * 2,
 
-    // ❗ tránh spam API khi data chưa hợp lệ
+    // tránh spam API khi data chưa hợp lệ
     enabled: true,
   });
 };

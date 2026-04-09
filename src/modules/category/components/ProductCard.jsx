@@ -1,7 +1,7 @@
 import { Heart } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { addToCart } from "../../../store/slices/cartSlice";
+import { addToCartAsync } from "../../../store/slices/cartSlice";
 import {
   toggleWishlist,
   selectWishlistItems,
@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 const ProductCard = ({
   id,
+  batchId,
   image,
   name,
   description,
@@ -76,12 +77,8 @@ const ProductCard = ({
     }
 
     dispatch(
-      addToCart({
-        id,
-        name,
-        currentPrice,
-        salePrice: currentPrice,
-        image,
+      addToCartAsync({
+        batchDetailId: batchId || String(id),
         quantity: 1,
       }),
     );
@@ -115,9 +112,14 @@ const ProductCard = ({
     }
   };
 
+  const navigateToDetail = () => {
+    navigate(`${ENDPOINTS.INDEX.PRODUCT_DETAIL}?productGeneralId=${id}&batchId=${batchId}`);
+  };
+
   return (
     <motion.div
-      className={`relative bg-white rounded-xl overflow-hidden border border-gray-100 transition-all duration-300
+      onClick={navigateToDetail}
+      className={`relative bg-white rounded-xl overflow-hidden cursor-pointer border border-gray-100 transition-all duration-300
         ${isOutOfStock ? "opacity-70" : "hover:shadow-2xl hover:border-green-200"}
         shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)]
       `}
@@ -211,12 +213,12 @@ const ProductCard = ({
           <div className="flex items-center mb-1 ">
             <div>
               <span className="text-2xl font-bold text-green-500 font-montserrat">
-                {currentPrice.toLocaleString("vi-VN")}đ
+                {(currentPrice ?? 0).toLocaleString("vi-VN")}đ
               </span>
               {hasDiscount ? (
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-sm line-through text-gray-400 font-montserrat">
-                    {originalPrice.toLocaleString("vi-VN")}đ
+                    {(originalPrice ?? 0).toLocaleString("vi-VN")}đ
                   </span>
                   {/* Discount Badge - Right side */}
                   {discount > 0 && (

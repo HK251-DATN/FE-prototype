@@ -26,8 +26,9 @@ export default function ProductList({ products = [] }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
       {products.map((item, index) => (
         <ProductCard
-          key={`${item.productGeneralId}-${item.batchId}-${index}`} // Tạo key duy nhất
+          key={`${item.productGeneralId}-${item.batchId}-${index}`}
           id={item.productGeneralId}
+          batchId={item.batchId}
           name={item.name}
           image={item.img}
           description={item.description}
@@ -37,8 +38,8 @@ export default function ProductList({ products = [] }) {
           rating={item.avgRate ? Number(item.avgRate.toFixed(1)) : 0}
           quantityAvailable={item.quantity}
           createdAt={item.createdAt}
-          isBestSeller={item.numRate > 5} // Ví dụ: trên 5 lượt đánh giá là bán chạy
-          vendorImage={getVendorPlaceholder(item.providerId)} // để ảnh tạm theo providerId
+          isBestSeller={item.numRate >= 5}
+          vendorImage={getVendorPlaceholder(item.providerId)}
         />
       ))}
     </div>

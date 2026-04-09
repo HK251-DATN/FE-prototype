@@ -17,10 +17,15 @@ export const ENDPOINTS = Object.freeze({
   USER: {
     DASHBOARD: "/user/dashboard",
     PROFILE: "/user/profile",
-    CART: "/user/cart",
+    PASSWORD: "/user/password",
+    ADDRESS: "/user/address",
     ORDER: "/user/order",
-    PAYMENT_SUCCESS: "/user/payment-success",
+    VOUCHER: "/user/voucher",
+    FARM: "/user/farm",
     WISHLIST: "/user/wishlist",
+    CART: "/user/cart",
+    ORDERING: "/user/ordering",
+    PAYMENT_SUCCESS: "/user/payment-success",
   },
   ADMIN: {
     DASHBOARD: "/admin/dashboard",

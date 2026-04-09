@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
-const Sidebar = ({ onFilterChange, filters = {} }) => {
+const Sidebar = ({ onFilterChange, filters = {}, availableTags = [] }) => {
   const [expandedSections, setExpandedSections] = useState({
     categories: true,
     price: true,
@@ -21,6 +21,9 @@ const Sidebar = ({ onFilterChange, filters = {} }) => {
     filters.selectedRatings || [],
   );
   const [selectedTags, setSelectedTags] = useState(filters.searchTags || []);
+  useEffect(() => {
+    setSelectedTags(filters.searchTags || []);
+  }, [filters.searchTags]);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({
@@ -332,27 +335,28 @@ const Sidebar = ({ onFilterChange, filters = {} }) => {
 
         {expandedSections.tags && (
           <div className="flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => {
-                  let newTags;
-                  if (selectedTags.includes(tag)) {
-                    newTags = selectedTags.filter((t) => t !== tag);
-                  } else {
-                    newTags = [...selectedTags, tag];
-                  }
-                  handleTagChange(newTags);
-                }}
-                className={`px-4 py-2 rounded-full text-sm font-poppins transition-colors ${
-                  selectedTags.includes(tag)
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
+            {availableTags.length > 0 ? (
+              availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() => {
+                    const newTags = selectedTags.includes(tag)
+                      ? selectedTags.filter((t) => t !== tag)
+                      : [...selectedTags, tag];
+                    handleTagChange(newTags);
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-poppins transition-colors ${
+                    selectedTags.includes(tag)
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  }`}
+                >
+                  {tag.replace(/_/g, " ")} {/* Hiển thị dep_da thành dep da cho đẹp */}
+                </button>
+              ))
+            ) : (
+              <p className="text-xs text-gray-400">Đang tải tag...</p>
+            )}
           </div>
         )}
       </div>

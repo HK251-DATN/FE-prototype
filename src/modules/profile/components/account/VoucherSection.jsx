@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Ticket, Copy } from "lucide-react";
-import { mockVouchers } from "@/data/mockData";
-import { toast } from "sonner";
+import { mockVouchers } from "@/modules/profile/components/account/mockData";
+import { toast } from "react-toastify";
 
 const VoucherSection = () => {
   const copyCode = (code) => {

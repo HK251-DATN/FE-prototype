@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { useCart } from "./CartContext";
 
-// ─────────────────────────────────────────────
-// CartPage — Giỏ hàng của tôi
-// ─────────────────────────────────────────────
-
 const formatPrice = (n) => `$${n.toFixed(2)}`;
 
 function QuantityControl({ value, onDecrease, onIncrease }) {

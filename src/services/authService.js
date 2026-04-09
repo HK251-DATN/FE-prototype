@@ -1,10 +1,10 @@
-import identityClient from "../api/identityClient";
+import { identityClient } from "../api/axiosClient";
 
 const authService = {
   // Đăng ký
   signup: async (email, password) => {
     try {
-      const response = await identityClient.post("/user", {
+      const response = await identityClient.post("/api/user", {
         email,
         password,
       });
@@ -17,7 +17,7 @@ const authService = {
   // Đăng nhập
   login: async (email, password) => {
     try {
-      const response = await identityClient.post("/user/login", {
+      const response = await identityClient.post("/api/user/login", {
         email,
         password,
       });

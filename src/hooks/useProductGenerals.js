@@ -5,6 +5,23 @@ import request from "../utils/request";
  * Hook để fetch danh sách ProductGeneral từ backend
  * Endpoint: GET /api/product-generals?page=0&size=100
  */
+export const useProductTags = () => {
+  return useQuery({
+    queryKey: ["product-generals"],
+    queryFn: async () => {
+      const response = await request.get(
+        "/api/product-generals?page=1&size=20",
+      );
+      // Trích xuất tất cả tags từ danh sách sản phẩm và loại bỏ trùng lặp
+      const allProducts = response?.detail || [];
+      const uniqueTags = [
+        ...new Set(allProducts.flatMap((product) => product.tags || [])),
+      ];
+      return uniqueTags;
+    },
+  });
+};
+
 export const useProductGenerals = (page = 0, size = 100) => {
   return useQuery({
     queryKey: ["productGenerals", page, size],
@@ -16,7 +33,7 @@ export const useProductGenerals = (page = 0, size = 100) => {
         },
       });
       // API response: { value: [...], Count: n }
-      const data = response?.value || response?.result || response || [];
+      const data = response?.detail || response?.result || response || [];
       return Array.isArray(data) ? data : [];
     },
     staleTime: 1000 * 60 * 5,
@@ -32,7 +49,7 @@ export const useProductGeneralDetail = (productGeneralId) => {
     queryKey: ["productGeneral", productGeneralId],
     queryFn: async () => {
       const response = await request.get(
-        `/api/product-generals/${productGeneralId}`
+        `/api/product-generals/${productGeneralId}`,
       );
       return response;
     },
@@ -48,7 +65,7 @@ export const useProductGeneralDetail = (productGeneralId) => {
 export const useProductGeneralsByCategory = (
   categoryId,
   page = 0,
-  size = 100
+  size = 100,
 ) => {
   return useQuery({
     queryKey: ["productGenerals", "byCategory", categoryId, page, size],

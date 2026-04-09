@@ -5,7 +5,7 @@ import { logout } from "../store/slices/authSlice";
 // Tạo axios instance
 const request = axios.create({
   // baseURL: import.meta.env.VITE_API_ECOMMERCE_URL || "http://localhost:8080",   sửa lại khi sửa cors
-  baseURL: "", // Để trống vì đã cấu hình proxy trong vite.config.mjs
+  baseURL: "http://localhost:9301",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

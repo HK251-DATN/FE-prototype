@@ -50,7 +50,7 @@ const OrderSuccess = () => {
 
           {/* Nút Xem đơn hàng */}
           <button
-            onClick={() => navigate("/order-history")}
+            onClick={() => navigate("/user/order")}
             className="flex items-center justify-center gap-2 px-8 py-3 rounded-full bg-[#00B207] text-white font-semibold text-sm hover:bg-[#009a06] transition-all uppercase tracking-wide shadow-md"
           >
             Xem đơn hàng

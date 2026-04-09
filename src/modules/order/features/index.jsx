@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,12 +7,13 @@ import {
   applyCoupon,
   removeCoupon,
   selectSelectedCoupon,
-  clearCart,
+  fetchCart,
 } from "../../../store/slices/cartSlice";
 import { ENDPOINTS } from "../../../routes/endPoints";
 import { Link } from "react-router-dom";
-import { QrCode, Copy, Check, Ticket, Info } from "lucide-react";
+import { QrCode, Copy, Check, Ticket, Info, MapPin, Plus } from "lucide-react";
 import { toast } from "react-toastify";
+import { addressApi, orderApi } from "../../../api/ecommerceApi";
 
 // Mock data cho các mã giảm giá
 const MOCK_COUPONS = [
@@ -46,13 +47,67 @@ export default function Order() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector(selectCartItems);
-  const { subtotal, discount, total } = useSelector(selectCartTotal);
+  const selectedItems = cartItems.filter((item) => item.isSelected);
+  // Cần tính lại subtotal/total cho các item được chọn
+  const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discount = useSelector(selectCartTotal).discount;
+  const total = Math.max(0, subtotal - discount);
+
   const selectedCoupon = useSelector(selectSelectedCoupon);
 
   const [paymentMethod, setPaymentMethod] = useState("qr");
   const [couponCode, setCouponCode] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Address state
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(true);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState({
+    receiverName: "",
+    receiverPNum: "",
+    province: "",
+    district: "",
+    commune: "",
+    detail: "",
+    isDefault: true,
+  });
+
+  useEffect(() => {
+    const fetchAddress = async () => {
+      try {
+        const res = await addressApi.getAddress();
+        if (res.detail) {
+          setAddresses(res.detail);
+          const defAddr = res.detail.find((a) => a.isDefault) || res.detail[0];
+          if (defAddr) setSelectedAddressId(defAddr.addressId);
+        } else {
+          setShowNewAddressForm(true);
+        }
+      } catch (err) {
+        console.error(err);
+        setShowNewAddressForm(true);
+      } finally {
+        setIsLoadingAddress(false);
+      }
+    };
+    fetchAddress();
+  }, []);
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await addressApi.addAddress(newAddress);
+      setAddresses([...addresses, res.detail]);
+      setSelectedAddressId(res.detail.addressId);
+      setShowNewAddressForm(false);
+      toast.success("Thêm địa chỉ thành công!");
+    } catch (err) {
+      toast.error("Lỗi khi thêm địa chỉ");
+    }
+  };
 
   // Xử lý áp dụng mã giảm giá
   const handleApplyCoupon = () => {
@@ -99,22 +154,29 @@ export default function Order() {
 
   // Xử lý thanh toán
   const handlePayment = async () => {
-    if (cartItems.length === 0) {
-      toast.error("Giỏ hàng của bạn đang trống");
+    if (selectedItems.length === 0) {
+      toast.error("Chưa có sản phẩm nào được chọn");
+      return;
+    }
+    if (!selectedAddressId) {
+      toast.error("Vui lòng chọn địa chỉ giao hàng");
       return;
     }
 
-    // Giả lập API call
-    toast.loading("Đang xử lý thanh toán...");
+    toast.loading("Đang xử lý đặt hàng...");
 
-    setTimeout(() => {
-      dispatch(clearCart());
+    try {
+      await orderApi.createOrder(selectedAddressId);
+      dispatch(fetchCart());
       navigate(ENDPOINTS.USER.PAYMENT_SUCCESS);
       toast.dismiss();
-    }, 2000);
+    } catch (e) {
+      toast.dismiss();
+      toast.error("Thanh toán thất bại. Vui lòng thử lại.");
+    }
   };
 
-  if (cartItems.length === 0) {
+  if (selectedItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
@@ -144,13 +206,187 @@ export default function Order() {
         <div className="grid md:grid-cols-3 gap-6">
           {/* Left: Sản phẩm và mã giảm giá */}
           <div className="md:col-span-2 space-y-6 font-[Poppins]">
+            {/* Địa chỉ giao hàng */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <MapPin className="text-green-600" />
+                  Địa chỉ giao hàng
+                </h2>
+                {!showNewAddressForm && (
+                  <button
+                    onClick={() => setShowNewAddressForm(true)}
+                    className="text-green-600 text-sm font-medium hover:underline flex items-center gap-1"
+                  >
+                    <Plus size={16} /> Thêm mới
+                  </button>
+                )}
+              </div>
+
+              {isLoadingAddress ? (
+                <p>Đang tải địa chỉ...</p>
+              ) : showNewAddressForm ? (
+                <form
+                  onSubmit={handleSaveAddress}
+                  className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                >
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Họ & Tên
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border p-2 rounded"
+                        value={newAddress.receiverName}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, receiverName: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Số điện thoại
+                      </label>
+                      <input
+                        required
+                        type="tel"
+                        className="w-full border p-2 rounded"
+                        value={newAddress.receiverPNum}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, receiverPNum: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tỉnh/Thành phố
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border p-2 rounded"
+                        value={newAddress.province}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, province: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Quận/Huyện
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border p-2 rounded"
+                        value={newAddress.district}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, district: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phường/Xã
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border p-2 rounded"
+                        value={newAddress.commune}
+                        onChange={(e) =>
+                          setNewAddress({ ...newAddress, commune: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Chi tiết (Số nhà, đường...)
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full border p-2 rounded"
+                      value={newAddress.detail}
+                      onChange={(e) =>
+                        setNewAddress({ ...newAddress, detail: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    {addresses.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowNewAddressForm(false)}
+                        className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded"
+                      >
+                        Hủy
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                    >
+                      Lưu và chọn
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-3">
+                  {addresses.map((addr) => (
+                    <label
+                      key={addr.addressId}
+                      className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                        selectedAddressId === addr.addressId
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        className="mt-1"
+                        checked={selectedAddressId === addr.addressId}
+                        onChange={() => setSelectedAddressId(addr.addressId)}
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-gray-800">
+                            {addr.receiverName}
+                          </span>
+                          <span className="text-gray-400">|</span>
+                          <span className="text-gray-600">{addr.receiverPNum}</span>
+                          {addr.isDefault && (
+                            <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                              Mặc định
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {addr.detail}, {addr.commune}, {addr.district}, {addr.province}
+                        </p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Sản phẩm */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold text-gray-800 mb-4">
-                Sản phẩm trong giỏ ({cartItems.length})
+                Sản phẩm trong giỏ ({selectedItems.length})
               </h2>
               <div className="space-y-4">
-                {cartItems.map((item) => (
+                {selectedItems.map((item) => (
                   <div
                     key={item.id}
                     className="flex gap-4 border-b border-gray-200 pb-4 last:border-0"

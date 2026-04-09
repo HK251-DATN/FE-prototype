@@ -95,6 +95,7 @@ const initializeAuthState = () => {
   const savedToken = localStorage.getItem("accessToken");
   console.log("authSlice initializing...");
   console.log("Saved token in LS:", savedToken ? "YES" : "NO");
+  const savedProfile = localStorage.getItem("userProfile");
 
   let initialUser = null;
   let initialPermissions = [];
@@ -115,6 +116,7 @@ const initializeAuthState = () => {
   return {
     token: savedToken || null,
     user: initialUser,
+    profile: savedProfile ? JSON.parse(savedProfile) : null,
     permissions: initialPermissions,
     isLoading: false,
     error: null,
@@ -160,12 +162,17 @@ const authSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
+    setProfile: (state, action) => {
+      state.profile = action.payload;
+      localStorage.setItem("userProfile", JSON.stringify(action.payload));
+    },
     logout: (state) => {
       console.log("Logging out...");
       state.token = null;
       state.user = null;
       state.permissions = [];
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("userProfile");
       localStorage.removeItem("userId");
       localStorage.removeItem("userEmail");
       console.log("Logout completed");
@@ -177,6 +184,7 @@ export const {
   setToken,
   setUser,
   setPermissions,
+  setProfile,
   setLoading,
   setError,
   logout,

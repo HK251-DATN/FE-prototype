@@ -4,10 +4,10 @@ import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { Eye, EyeOff } from "lucide-react";
 import authService from "../../../services/authService";
-import { setToken, setUser } from "../../../store/slices/authSlice";
+import { setToken, setUser, setProfile } from "../../../store/slices/authSlice";
 import { ENDPOINTS } from "../../../routes/endPoints";
 import "./auth.css";
-
+import buyerApi from "@/api/buyerApi";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +34,16 @@ function Login() {
             email: response.detail.userEmail || email,
           }),
         );
+        try {
+          const profileRes = await buyerApi.getProfile();
+          if (profileRes?.type === "GOOD" && profileRes.detail) {
+            // Lưu Profile (fName, lName, avtUrl...) vào Redux để Header hiển thị
+            dispatch(setProfile(profileRes.detail));
+          }
+        } catch (profileError) {
+          console.error("Lỗi lấy thông tin chi tiết:", profileError);
+          // Không chặn quá trình đăng nhập nếu chỉ lỗi lấy profile
+        }
         toast.success("Đăng nhập thành công!");
         setTimeout(() => navigate(ENDPOINTS.INDEX.HOME), 800);
       } else {
@@ -73,6 +83,7 @@ function Login() {
             />
             <span
               className="toggle-password"
+              tabIndex={-1}
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <Eye /> : <EyeOff />}

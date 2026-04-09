@@ -1,24 +1,29 @@
+// src/api/axiosClient.js
 import axios from "axios";
 
-const axiosClient = axios.create({
-  baseURL: "http://localhost:8080/api",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+// Hàm tạo cấu hình chung để tái sử dụng
+const createInstance = (baseURL) => {
+  const instance = axios.create({
+    baseURL,
+    timeout: 10000,
+    headers: { "Content-Type": "application/json" },
+  });
 
-// Interceptor: Xử lý dữ liệu trước khi trả về cho Component
-axiosClient.interceptors.response.use(
-  (response) => {
-    // Axios bọc dữ liệu trong field 'data', lấy ra luôn cho tiện
-    return response.data;
-  },
-  (error) => {
-    // Xử lý lỗi tập trung ở đây (VD: check 401 để logout)
-    console.error("API Error:", error.response?.data || error.message);
-    return Promise.reject(error);
-  },
-);
+  // Interceptor chung cho tất cả (Ví dụ: đính kèm Token)
+  instance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  });
+  instance.interceptors.response.use(
+    (response) => response.data, // Trả về data trực tiếp để bỏ qua lớp bọc của axios
+    (error) => Promise.reject(error),
+  );
 
-export default axiosClient;
+  return instance;
+};
+
+// Khởi tạo các instance cho từng dịch vụ
+export const identityClient = createInstance("http://localhost:9000");
+export const backofficeClient = createInstance("http://localhost:9100");
+export const ecommerceClient = createInstance("http://localhost:9301");

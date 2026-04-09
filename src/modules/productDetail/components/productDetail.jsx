@@ -1,4 +1,59 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { addToCartAsync } from "../../../store/slices/cartSlice";
+import { toast } from "react-toastify";
+import { ENDPOINTS } from "../../../routes/endPoints";
+
+// =====================
+// MOCK DATA - Replace with real API data when available
+// =====================
+const mockProduct = {
+  id: "1",
+  name: "Cải thìa",
+  status: "Còn hàng", // "Còn hàng" | "Hết hàng"
+  rating: 5,
+  reviewCount: 4,
+  sku: "WW75K5210YW/SV",
+  originalPrice: 10000,
+  salePrice: 14000,
+  discountPercent: -14,
+  description:
+    "Cải thìa tươi xanh, được thu hoạch trong ngày, lá non giòn, thân trắng mọng nước và vị ngọt tự nhiên. Sản phẩm thích hợp cho các món xào, nấu canh hoặc lẩu, giàu chất xơ, vitamin và khoáng chất, tốt cho sức khỏe cả gia đình.",
+  category: "Rau củ tươi",
+  tags: ["Rau củ", "Sức khỏe", "Sạch"],
+  shop: {
+    name: "farmary",
+    logo: "https://api.builder.io/api/v1/image/assets/TEMP/b6242515f69e6e3bced65384fb12fdfe60507f07?width=160",
+  },
+  images: [
+    {
+      id: "1",
+      src: "https://api.builder.io/api/v1/image/assets/TEMP/548c4419b997dee51a58fbce5a268d5c8751099a?width=1112",
+      alt: "Cải thìa tươi",
+    },
+    {
+      id: "2",
+      src: "https://api.builder.io/api/v1/image/assets/TEMP/b6242515f69e6e3bced65384fb12fdfe60507f07?width=160",
+      alt: "Cải thìa tươi - ảnh 2",
+    },
+    {
+      id: "3",
+      src: "https://api.builder.io/api/v1/image/assets/TEMP/6f19792f7fdd87fb9dc876c00f37d4ee3a02a525?width=160",
+      alt: "Cải thìa tươi - ảnh 3",
+    },
+    {
+      id: "4",
+      src: "https://api.builder.io/api/v1/image/assets/TEMP/ff8e5eaa8a9afff8fc1e96abf111b35098ab09c8?width=160",
+      alt: "Cải thìa tươi - ảnh 4",
+    },
+    {
+      id: "5",
+      src: "https://api.builder.io/api/v1/image/assets/TEMP/9c07e4a6968ae4a3f3e78472c9670ba3ee90cb25?width=160",
+      alt: "Cải thìa tươi - ảnh 5",
+    },
+  ],
+};
 
 // =====================
 // HELPER COMPONENTS
@@ -142,48 +197,46 @@ function HeartIcon() {
   );
 }
 
-function ShopLogo({ name }) {
+function ShopLogo() {
   return (
-    <div className="flex items-center gap-2">
-      <svg
-        width="56"
-        height="56"
-        viewBox="0 0 56 56"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <svg
+      width="56"
+      height="56"
+      viewBox="0 0 56 56"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x="0.4"
+        y="0.4"
+        width="55.2"
+        height="55.2"
+        rx="3.6"
+        fill="white"
+        stroke="#E6E6E6"
+        strokeWidth="0.8"
+      />
+      <path
+        d="M17.1333 21.0015C29.2644 8.40391 43.2617 21.0015 43.2617 21.0015C43.2617 21.0015 29.2644 33.5991 17.1333 21.0015Z"
+        fill="#36C63F"
+      />
+      <path
+        d="M34.8938 26.196C39.954 24.6073 43.4454 21.4992 43.5916 21.3676L44 21L43.5916 20.6324C43.4454 20.5008 39.954 17.3927 34.8938 15.804C31.902 14.8647 28.9897 14.6615 26.2377 15.2C22.858 15.8612 19.7256 17.6464 16.9243 20.5054L12 20.5054L12 21.4946L16.9243 21.4946C19.7257 24.3536 22.8579 26.1387 26.2377 26.8C28.9897 27.3384 31.9021 27.1352 34.8938 26.196ZM26.4097 25.8258C23.5163 25.2559 20.806 23.8005 18.3384 21.4946L25.3259 21.4946L27.9805 24.1492L28.6798 23.4498L26.7247 21.4946L32.5294 21.4946L32.5294 20.5054L29.0575 20.5054L31.0127 18.5502L30.3133 17.8509L27.6587 20.5054L22.992 20.5054L24.4806 19.0168L23.7812 18.3174L21.5931 20.5055L18.3384 20.5055C20.806 18.1996 23.5163 16.7441 26.4097 16.1742C28.9942 15.6652 31.7388 15.855 34.5674 16.7384C38.4272 17.9437 41.4068 20.1329 42.4887 21.0001C41.4067 21.8673 38.4272 24.0563 34.5674 25.2618C31.7388 26.145 28.9942 26.3348 26.4097 25.8258Z"
+        fill="#009F06"
+      />
+      <text
+        fill="#555555"
+        style={{ whiteSpace: "pre" }}
+        fontFamily="Dancing Script"
+        fontSize="13"
+        fontWeight="bold"
+        letterSpacing="0em"
       >
-        <rect
-          x="0.4"
-          y="0.4"
-          width="55.2"
-          height="55.2"
-          rx="3.6"
-          fill="white"
-          stroke="#E6E6E6"
-          strokeWidth="0.8"
-        />
-        <path
-          d="M17.1333 21.0015C29.2644 8.40391 43.2617 21.0015 43.2617 21.0015C43.2617 21.0015 29.2644 33.5991 17.1333 21.0015Z"
-          fill="#36C63F"
-        />
-        <path
-          d="M34.8938 26.196C39.954 24.6073 43.4454 21.4992 43.5916 21.3676L44 21L43.5916 20.6324C43.4454 20.5008 39.954 17.3927 34.8938 15.804C31.902 14.8647 28.9897 14.6615 26.2377 15.2C22.858 15.8612 19.7256 17.6464 16.9243 20.5054L12 20.5054L12 21.4946L16.9243 21.4946C19.7257 24.3536 22.8579 26.1387 26.2377 26.8C28.9897 27.3384 31.9021 27.1352 34.8938 26.196Z"
-          fill="#009F06"
-        />
-        <text
-          fill="#555555"
-          style={{ whiteSpace: "pre" }}
-          fontFamily="Dancing Script"
-          fontSize="13"
-          fontWeight="bold"
-          letterSpacing="0em"
-        >
-          <tspan x="8" y="39.66">
-            {name || "farmary"}
-          </tspan>
-        </text>
-      </svg>
-    </div>
+        <tspan x="8" y="39.66">
+          farmary
+        </tspan>
+      </text>
+    </svg>
   );
 }
 
@@ -191,37 +244,31 @@ function ShopLogo({ name }) {
 // MAIN COMPONENT
 // =====================
 
-/**
- * Props:
- *  - productGeneral: data từ /api/product-generals/:id
- *  - batchDetail:    data từ /api/batch-details/:id
- *  - productDetail:  data từ /api/product-details/:id
- */
-export default function ProductDetails({
-  productGeneral,
-  batchDetail,
-  productDetail,
-}) {
+export default function ProductDetails({ product }) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  if (!productGeneral || !batchDetail || !productDetail) return null;
+  const handleAddToCart = () => {
+    if (product.status === "Hết hàng") {
+      toast.error("Sản phẩm tạm thời hết hàng");
+      return;
+    }
 
-  // ---- Mapping API data sang shape component cần ----
-  const images = [
-    // Ảnh chính từ product-generals
-    { id: "general", src: productGeneral.img, alt: productGeneral.name },
-    // Ảnh từ product-details (nếu có và khác ảnh chính)
-    ...(productDetail.img && productDetail.img !== productGeneral.img
-      ? [{ id: "detail", src: productDetail.img, alt: productGeneral.name }]
-      : []),
-  ];
+    dispatch(addToCartAsync({ batchDetailId: product.batchId, quantity }));
+    toast.success("Đã thêm vào giỏ hàng");
+    
+    setTimeout(() => {
+      navigate(ENDPOINTS.USER.CART);
+    }, 500);
+  };
 
-  const stock = batchDetail.quantity > 0 ? "Còn hàng" : "Hết hàng";
-  const avgRating = Math.round(batchDetail.avgRate || 0);
-  const reviewCount = batchDetail.numRate || 0;
-  const price = batchDetail.price || 0;
+  const images =
+    product?.images?.length > 0
+      ? product.images
+      : [{ id: 1, src: "/placeholder.jpg", alt: "No image" }];
 
   const visibleStart = Math.max(
     0,
@@ -229,7 +276,16 @@ export default function ProductDetails({
   );
   const visibleImages = images.slice(visibleStart, visibleStart + 4);
 
-  const formatPrice = (p) => p.toLocaleString("vi-VN") + "đ";
+  const handlePrev = () => {
+    setSelectedImageIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNext = () => {
+    setSelectedImageIndex((prev) => Math.min(images.length - 1, prev + 1));
+  };
+
+  const formatPrice = (price) =>
+    price ? price.toLocaleString("vi-VN") + "đ" : "0đ";
 
   return (
     <div className="bg-white rounded-lg p-6 md:p-10 font-[Poppins]">
@@ -238,10 +294,9 @@ export default function ProductDetails({
         <div className="flex gap-4 lg:w-[50%]">
           {/* Thumbnail Sidebar */}
           <div className="flex flex-col items-center gap-3 w-[80px] flex-shrink-0">
+            {/* Up arrow */}
             <button
-              onClick={() =>
-                setSelectedImageIndex((prev) => Math.max(0, prev - 1))
-              }
+              onClick={handlePrev}
               disabled={selectedImageIndex === 0}
               className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
             >
@@ -256,6 +311,7 @@ export default function ProductDetails({
               </svg>
             </button>
 
+            {/* Thumbnails */}
             <div className="flex flex-col gap-3">
               {visibleImages.map((img, idx) => {
                 const realIdx = visibleStart + idx;
@@ -279,12 +335,9 @@ export default function ProductDetails({
               })}
             </div>
 
+            {/* Down arrow */}
             <button
-              onClick={() =>
-                setSelectedImageIndex((prev) =>
-                  Math.min(images.length - 1, prev + 1),
-                )
-              }
+              onClick={handleNext}
               disabled={selectedImageIndex === images.length - 1}
               className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
             >
@@ -316,48 +369,47 @@ export default function ProductDetails({
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl md:text-4xl font-semibold text-[#1A1A1A]">
-                {productGeneral.name}
+                {product.name}
               </h1>
               <span
                 className={`px-2 py-1 rounded text-sm font-normal ${
-                  stock === "Còn hàng"
+                  product.status === "Còn hàng"
                     ? "bg-[rgba(32,181,38,0.2)] text-[#2C742F]"
                     : "bg-red-100 text-red-600"
                 }`}
               >
-                {stock}
+                {product.status}
               </span>
             </div>
 
-            {/* Rating + Batch ID */}
+            {/* Rating + SKU */}
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <StarIcon key={i} filled={i < avgRating} />
+                  <StarIcon key={i} filled={i < product.rating} />
                 ))}
                 <span className="text-[#666] text-sm ml-1">
-                  {reviewCount} lượt đánh giá
+                  {product.reviewCount} lượt đánh giá
                 </span>
               </div>
               <span className="text-[#B3B3B3] font-medium">•</span>
               <div className="flex items-center gap-1">
-                <span className="text-[#333] text-sm font-medium">
-                  Lô hàng:
-                </span>
-                <span className="text-[#666] text-sm">
-                  #{batchDetail.batchDetailId}
-                </span>
+                <span className="text-[#333] text-sm font-medium">SKU:</span>
+                <span className="text-[#666] text-sm">{product.sku}</span>
               </div>
             </div>
           </div>
 
-          {/* Price — hiển thị giá từ batch */}
+          {/* Price */}
           <div className="flex items-center gap-3">
-            <span className="text-[#2C742F] text-2xl font-medium">
-              {formatPrice(price)}
+            <span className="text-[#B3B3B3] text-xl line-through">
+              {formatPrice(product.originalPrice)}
             </span>
-            <span className="text-[#808080] text-sm">
-              / {productGeneral.description}
+            <span className="text-[#2C742F] text-2xl font-medium">
+              {formatPrice(product.salePrice)}
+            </span>
+            <span className="px-3 py-0.5 bg-[rgba(234,75,72,0.10)] text-[#EA4B48] text-sm font-medium rounded-full">
+              {product.discountPercent}%
             </span>
           </div>
 
@@ -367,20 +419,24 @@ export default function ProductDetails({
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-[#1A1A1A] text-sm">Shop:</span>
-              <ShopLogo name={productGeneral.providerId} />
+              <ShopLogo />
             </div>
             <div className="flex items-center gap-2.5">
               <span className="text-[#1A1A1A] text-sm">Chia sẻ sản phẩm:</span>
               <div className="flex items-center gap-1.5">
+                {/* Facebook */}
                 <button className="w-10 h-10 rounded-full bg-[#00B207] flex items-center justify-center hover:bg-[#009a06] transition-colors">
                   <FacebookIcon />
                 </button>
+                {/* Twitter */}
                 <button className="w-10 h-10 rounded-full border border-[#E6E6E6] flex items-center justify-center hover:bg-gray-50 transition-colors">
                   <TwitterIcon />
                 </button>
+                {/* Pinterest */}
                 <button className="w-10 h-10 rounded-full border border-[#E6E6E6] flex items-center justify-center hover:bg-gray-50 transition-colors">
                   <PinterestIcon />
                 </button>
+                {/* Instagram */}
                 <button className="w-10 h-10 rounded-full border border-[#E6E6E6] flex items-center justify-center hover:bg-gray-50 transition-colors">
                   <InstagramIcon />
                 </button>
@@ -388,9 +444,9 @@ export default function ProductDetails({
             </div>
           </div>
 
-          {/* Description ngắn từ product-generals */}
+          {/* Description */}
           <p className="text-[#808080] text-sm leading-relaxed">
-            {productGeneral.description}
+            {product.description}
           </p>
 
           {/* CTA Row */}
@@ -415,9 +471,7 @@ export default function ProductDetails({
                 {quantity}
               </span>
               <button
-                onClick={() =>
-                  setQuantity((q) => Math.min(batchDetail.quantity, q + 1))
-                }
+                onClick={() => setQuantity((q) => q + 1)}
                 className="w-[34px] h-[34px] rounded-full bg-[#F2F2F2] flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -433,7 +487,10 @@ export default function ProductDetails({
             </div>
 
             {/* Add to Cart */}
-            <button className="flex items-center gap-3 px-8 py-3.5 rounded-full bg-[#00B207] text-white text-base font-semibold hover:bg-[#009a06] transition-colors">
+            <button
+              onClick={handleAddToCart}
+              className="flex items-center gap-3 px-8 py-3.5 rounded-full bg-[#00B207] text-white text-base font-semibold hover:bg-[#009a06] transition-colors"
+            >
               Thêm vào giỏ
               <CartIcon />
             </button>
@@ -456,21 +513,26 @@ export default function ProductDetails({
             </button>
           </div>
 
-          {/* Tags */}
+          {/* Category + Tags */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[#1A1A1A] text-sm font-medium">
+                Danh mục:
+              </span>
+              <span className="text-[#808080] text-sm">{product.category}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[#1A1A1A] text-sm font-medium">Tag:</span>
-              {(productGeneral.tags || []).map((tag, index, arr) => (
+              {product.tags.map((tag, index) => (
                 <span
                   key={tag}
                   className={`text-sm ${
-                    index === arr.length - 1
+                    index === product.tags.length - 1
                       ? "text-[#1A1A1A] underline cursor-pointer hover:text-[#00B207]"
                       : "text-[#808080]"
                   }`}
                 >
                   {tag}
-                  {index < arr.length - 1 && ","}
                 </span>
               ))}
             </div>

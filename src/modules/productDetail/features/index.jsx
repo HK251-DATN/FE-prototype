@@ -1,52 +1,89 @@
 import React, { useState, useEffect } from "react";
 import ProductDetails from "../components/productDetail";
-import ProductDescription from "../components/productDescription";
+import ProductDescription from "../components/productDescriptionNew2";
 import Breadcrumb from "../../../components/Breadcrumbs/Breadcrumbs";
-import { useParams } from "react-router";
-
-// const BASE_URL =
-//   import.meta.env.VITE_API_ECOMMERCE_URL || "http://localhost:8080";
+import { useSearchParams } from "react-router-dom";
+import request from "../../../utils/request";
 
 export default function Product() {
-  // Lấy id từ URL: /products/:id
-  const { id } = useParams();
-  const productDetailId = id || "1";
+  const [searchParams] = useSearchParams();
+  const productGeneralId = searchParams.get("productGeneralId");
+  const batchId = searchParams.get("batchId"); // Optional
 
-  const [productGeneral, setProductGeneral] = useState(null);
-  const [batchDetail, setBatchDetail] = useState(null);
-  const [productDetail, setProductDetail] = useState(null);
+  const [productData, setProductData] = useState(null);
+  const [descriptionData, setDescriptionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchAll = async () => {
+      if (!productGeneralId) {
+        setError("Không tìm thấy mã sản phẩm.");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
-        // 1. Fetch product-details trước để lấy productGeneralId và batchId
-        const detailRes = await fetch(
-          `/api/product-details/${productDetailId}`,
-        );
-        if (!detailRes.ok) throw new Error("Không thể tải thông tin sản phẩm");
-        const detailData = await detailRes.json();
-        const detail = detailData.detail;
-        setProductDetail(detail);
+        // Fetch từ product-search
+        const searchRes = await request.get("/api/product-search", {
+          params: { productGeneralId }
+        });
+        
+        let details = searchRes?.detail;
+        if (!details || details.length === 0) {
+          throw new Error("Sản phẩm không còn tồn tại");
+        }
 
-        // 2. Fetch product-generals và batch-details song song
-        const [generalRes, batchRes] = await Promise.all([
-          fetch(`/api/product-generals/${detail.productGeneralId}`),
-          fetch(`/api/batch-details/${detail.batchId}`),
-        ]);
+        // Nếu có batchId, ưu tiên lấy đúng lô, nếu không lấy lô đầu tiên
+        let item = details.find((d) => d.batchId === batchId) || details[0];
 
-        if (!generalRes.ok)
-          throw new Error("Không thể tải thông tin chung sản phẩm");
-        if (!batchRes.ok) throw new Error("Không thể tải thông tin lô hàng");
+        // 1. Map data cho ProductDetail Component
+        const mappedProduct = {
+          id: item.productGeneralId,
+          batchId: item.batchId, // Dùng để add to cart
+          name: item.name,
+          status: item.quantity > 0 ? "Còn hàng" : "Hết hàng",
+          rating: item.avgRate || 5,
+          reviewCount: item.numRate || 0,
+          sku: item.batchId,
+          originalPrice: item.originPrice,
+          salePrice: item.salePrice,
+          discountPercent: item.disVal ? Number(item.disVal.toFixed(0)) : 0, 
+          description: item.description,
+          category: `Danh mục ${item.categoryId}`, // Fake category name
+          tags: ["Rau củ"], // Mặc định nếu API không trả về
+          shop: {
+            name: item.providerId,
+            logo: "https://via.placeholder.com/150", 
+          },
+          images: [
+            { id: "1", src: item.img, alt: item.name },
+          ].filter(img => img.src)
+        };
 
-        const generalData = await generalRes.json();
-        const batchData = await batchRes.json();
+        // 2. Lấy thêm thông tin detailHTML từ product-generals hoặc batch-details nếu cần mở rộng
+        const mappedDescription = {
+          tabs: ["Mô tả", "Thông tin thêm", "Đánh giá"],
+          description: {
+            htmlContent: item.description || "Chưa có mô tả chi tiết.",
+            features: [
+              "Chất lượng đảm bảo",
+              "Giá thành hợp lý"
+            ],
+          },
+          additionalInfo: {
+            weight: "Cập nhật sau", 
+            origin: item.providerId,
+            storage: "Bảo quản nơi khô ráo",
+            certification: "VietGAP",
+          },
+          reviews: [] 
+        };
 
-        setProductGeneral(generalData.detail);
-        setBatchDetail(batchData.detail);
+        setProductData(mappedProduct);
+        setDescriptionData(mappedDescription);
       } catch (err) {
         setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu");
       } finally {
@@ -55,7 +92,7 @@ export default function Product() {
     };
 
     fetchAll();
-  }, [productDetailId]);
+  }, [productGeneralId, batchId]);
 
   if (loading) {
     return (
@@ -86,7 +123,7 @@ export default function Product() {
     );
   }
 
-  if (error) {
+  if (error || !productData) {
     return (
       <div className="max-w-7xl mx-auto bg-white rounded-xl flex items-center justify-center min-h-[400px]">
         <div className="text-center text-red-500">
@@ -98,27 +135,19 @@ export default function Product() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto bg-white rounded-xl flex flex-col relative">
+    <div className="max-w-7xl mx-auto bg-white rounded-xl flex flex-col relative gap-8 pb-10">
       <Breadcrumb
         items={[
-          { label: "Home", link: "/" },
-          { label: "Product", link: "/product" },
+          { label: "Trang chủ", link: "/" },
+          { label: "Sản phẩm", link: "/category" },
           {
-            label: productGeneral?.name || "Chi tiết sản phẩm",
-            link: `/products/${productDetailId}`,
+            label: productData.name,
+            link: `/product?productGeneralId=${productGeneralId}`,
           },
         ]}
       />
-      <ProductDetails
-        productGeneral={productGeneral}
-        batchDetail={batchDetail}
-        productDetail={productDetail}
-      />
-      <ProductDescription
-        productGeneral={productGeneral}
-        batchDetail={batchDetail}
-        productDetail={productDetail}
-      />
+      <ProductDetails product={productData} />
+      <ProductDescription data={descriptionData} />
     </div>
   );
 }

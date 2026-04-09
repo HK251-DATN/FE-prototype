@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,32 +13,25 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { mockAddresses } from "@/modules/profile/components/account/mockData";
-import { addressApi } from "@/api/ecommerceApi";
+import addressApi from "@/api/ecommerceApi"; // Đảm bảo đường dẫn này đúng
 import { toast } from "react-toastify";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// --- MOCK DATA: Giả lập dữ liệu Tỉnh/Huyện/Xã ---
-// Trong thực tế, bạn sẽ gọi API (ví dụ: API của Giao Hàng Nhanh) để lấy danh sách này
+// Giữ lại locationData để phục vụ dropdown chọn Tỉnh/Huyện/Xã
 const locationData = {
-  "Hồ Chí Minh": {
-    "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Đa Kao"],
-    "Quận 7": ["Phường Tân Phong", "Phường Tân Quy", "Phường Phú Mỹ"],
+  "TP HCM": {
+    "Thu Duc": ["Linh Trung", "Linh Tây", "Tam Phú"],
+    "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành"],
   },
-  "Hà Nội": {
-    "Quận Cầu Giấy": ["Phường Dịch Vọng", "Phường Mai Dịch"],
-    "Quận Đống Đa": ["Phường Láng Hạ", "Phường Ô Chợ Dừa"],
+  "TP Binh Duong": {
+    "Lai Thieu": ["Linh Trung", "Vĩnh Phú"],
   },
 };
 
 const AddressSection = () => {
-  // const [addresses, setAddresses] = useState(mockAddresses);
   const queryClient = useQueryClient();
-
-  // --- STATES QUẢN LÝ POPUP & FORM ---
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [formMode, setFormMode] = useState("add"); // "add" | "edit"
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null); // ID của địa chỉ đang chờ xóa
+  const [formMode, setFormMode] = useState("add");
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const [formData, setFormData] = useState({
     addressId: "",
@@ -50,6 +44,7 @@ const AddressSection = () => {
     isDefault: false,
   });
 
+  // --- 1. GET ADDRESSES ---
   const { data: response, isLoading } = useQuery({
     queryKey: ["userAddresses"],
     queryFn: addressApi.getAddress,
@@ -57,13 +52,14 @@ const AddressSection = () => {
 
   const addresses = response?.detail || [];
 
-  // --- LOGIC: Đẩy địa chỉ mặc định lên đầu ---
+  // Đẩy địa chỉ mặc định lên đầu
   const sortedAddresses = useMemo(() => {
     return [...addresses].sort(
       (a, b) => Number(b.isDefault) - Number(a.isDefault),
     );
   }, [addresses]);
 
+  // --- 2. MUTATIONS ---
   const addMutation = useMutation({
     mutationFn: addressApi.addAddress,
     onSuccess: () => {
@@ -92,6 +88,7 @@ const AddressSection = () => {
     },
   });
 
+  // Logic đặc biệt cho "Thiết lập mặc định" (thường là một API PUT update field isDefault)
   const setDefaultMutation = useMutation({
     mutationFn: (addr) =>
       addressApi.updateAddress(addr.addressId, { ...addr, isDefault: true }),
@@ -101,67 +98,7 @@ const AddressSection = () => {
     },
   });
 
-  // --- LOGIC: Dropdown Tỉnh/Huyện/Xã ---
-  // const provinces = Object.keys(locationData);
-  // const districts = formData.province
-  //   ? Object.keys(locationData[formData.province])
-  //   : [];
-  // const wards =
-  //   formData.province && formData.district
-  //     ? locationData[formData.province][formData.district]
-  //     : [];
-
-  // const handleProvinceChange = (e) => {
-  //   setFormData({
-  //     ...formData,
-  //     province: e.target.value,
-  //     district: "",
-  //     ward: "",
-  //   });
-  // };
-
-  // const handleDistrictChange = (e) => {
-  //   setFormData({ ...formData, district: e.target.value, ward: "" });
-  // };
-
-  // // --- ACTIONS ---
-  // const openAddForm = () => {
-  //   setFormData({
-  //     id: "",
-  //     name: "",
-  //     phone: "",
-  //     address: "",
-  //     province: "",
-  //     district: "",
-  //     ward: "",
-  //     isDefault: false,
-  //   });
-  //   setFormMode("add");
-  //   setIsFormOpen(true);
-  // };
-
-  // const openEditForm = (addr) => {
-  //   setFormData(addr);
-  //   setFormMode("edit");
-  //   setIsFormOpen(true);
-  // };
-
-  // const handleSave = () => {
-  //   if (formMode === "add") {
-  //     const newAddr = { ...formData, id: Date.now().toString() };
-  //     // Nếu là địa chỉ đầu tiên, tự động set mặc định
-  //     if (addresses.length === 0) newAddr.isDefault = true;
-  //     setAddresses([...addresses, newAddr]);
-  //   } else {
-  //     setAddresses(addresses.map((a) => (a.id === formData.id ? formData : a)));
-  //   }
-  //   setIsFormOpen(false);
-  // };
-
-  // const setDefault = (id) => {
-  //   setAddresses(addresses.map((a) => ({ ...a, isDefault: a.id === id })));
-  // };
-
+  // --- 3. FORM HANDLERS ---
   const provinces = Object.keys(locationData);
   const districts = formData.province
     ? Object.keys(locationData[formData.province] || {})
@@ -205,10 +142,6 @@ const AddressSection = () => {
     setIsFormOpen(true);
   };
 
-  // const confirmDelete = () => {
-  //   setAddresses(addresses.filter((a) => a.id !== deleteConfirmId));
-  //   setDeleteConfirmId(null);
-  // };
   if (isLoading)
     return (
       <div className="flex justify-center p-20">
@@ -218,7 +151,6 @@ const AddressSection = () => {
 
   return (
     <div className="bg-card rounded-xl border border-border p-6 lg:p-8 relative">
-      {/* --- HEADER --- */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-primary/10 rounded-full">
@@ -233,22 +165,17 @@ const AddressSection = () => {
             </p>
           </div>
         </div>
-        <Button onClick={openAddForm} className="shadow-sm">
+        <Button onClick={openAddForm}>
           <Plus className="w-4 h-4 mr-2" />
           Thêm địa chỉ mới
         </Button>
       </div>
 
-      {/* --- DANH SÁCH ĐỊA CHỈ --- */}
       <div className="grid gap-4">
         {sortedAddresses.map((addr) => (
           <div
             key={addr.addressId}
-            className={`p-5 rounded-xl border transition-all duration-200 hover:shadow-md ${
-              addr.isDefault
-                ? "border-primary/50 bg-primary/5"
-                : "border-border bg-card"
-            }`}
+            className={`p-5 rounded-xl border transition-all ${addr.isDefault ? "border-primary/50 bg-primary/5" : "border-border bg-card"}`}
           >
             <div className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="space-y-2 flex-1">
@@ -256,19 +183,12 @@ const AddressSection = () => {
                   <span className="font-semibold text-foreground text-lg">
                     {addr.receiverName}
                   </span>
-                  <span className="text-muted-foreground hidden sm:inline">
-                    |
-                  </span>
+                  <span className="text-muted-foreground">|</span>
                   <span className="text-muted-foreground">
                     {addr.receiverPNum}
                   </span>
                   {addr.isDefault && (
-                    <Badge
-                      variant="default"
-                      className="bg-primary text-primary-foreground text-xs ml-2"
-                    >
-                      Mặc định
-                    </Badge>
+                    <Badge className="bg-primary">Mặc định</Badge>
                   )}
                 </div>
                 <div className="text-muted-foreground">
@@ -279,18 +199,18 @@ const AddressSection = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col items-end justify-between gap-3 shrink-0 border-t sm:border-t-0 sm:border-l border-border pt-4 sm:pt-0 sm:pl-4">
+              <div className="flex flex-col items-end justify-between gap-3 shrink-0 sm:border-l border-border sm:pl-4 pt-4 sm:pt-0">
                 <div className="flex gap-3">
                   <button
                     onClick={() => openEditForm(addr)}
-                    className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium transition-colors"
+                    className="text-blue-600 flex items-center gap-1 text-sm"
                   >
                     <Edit2 className="w-4 h-4" /> Cập nhật
                   </button>
                   {!addr.isDefault && (
                     <button
                       onClick={() => setDeleteConfirmId(addr.addressId)}
-                      className="text-destructive hover:text-red-700 flex items-center gap-1 text-sm font-medium transition-colors"
+                      className="text-destructive flex items-center gap-1 text-sm"
                     >
                       <Trash2 className="w-4 h-4" /> Xóa
                     </button>
@@ -301,7 +221,6 @@ const AddressSection = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setDefaultMutation.mutate(addr)}
-                    className="w-full sm:w-auto mt-auto"
                   >
                     Thiết lập mặc định
                   </Button>
@@ -310,38 +229,30 @@ const AddressSection = () => {
             </div>
           </div>
         ))}
-        {addresses.length === 0 && (
-          <div className="text-center py-10 border-2 border-dashed rounded-xl border-border text-muted-foreground">
-            Bạn chưa có địa chỉ nào. Hãy thêm một địa chỉ mới nhé!
-          </div>
-        )}
       </div>
 
-      {/* --- MODAL THÊM / SỬA ĐỊA CHỈ --- */}
+      {/* MODAL FORM */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
-          <div className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-border flex justify-between items-center bg-muted/30">
-              <h4 className="font-semibold text-lg text-foreground">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-2xl rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h4 className="font-semibold text-lg">
                 {formMode === "add" ? "Thêm địa chỉ mới" : "Cập nhật địa chỉ"}
               </h4>
-              <button
-                onClick={() => setIsFormOpen(false)}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
+              <button onClick={() => setIsFormOpen(false)}>
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div className="space-y-1.5">
-                <Label>Họ tên</Label>
+                <Label>Họ tên người nhận</Label>
                 <Input
                   value={formData.receiverName}
                   onChange={(e) =>
                     setFormData({ ...formData, receiverName: e.target.value })
                   }
-                  placeholder="VD: Hồ Quốc Khương"
+                  placeholder="VD: Anh Khôi"
                 />
               </div>
               <div className="space-y-1.5">
@@ -351,13 +262,13 @@ const AddressSection = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, receiverPNum: e.target.value })
                   }
-                  placeholder="VD: 0987654321"
+                  placeholder="VD: 034..."
                 />
               </div>
-
               <div className="space-y-1.5">
                 <Label>Tỉnh/Thành phố</Label>
                 <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={formData.province}
                   onChange={(e) =>
                     setFormData({
@@ -367,20 +278,20 @@ const AddressSection = () => {
                       commune: "",
                     })
                   }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">Chọn Tỉnh/Thành phố</option>
-                  {provinces.map((prov) => (
-                    <option key={prov} value={prov}>
-                      {prov}
+                  {provinces.map((p) => (
+                    <option key={p} value={p}>
+                      {p}
                     </option>
                   ))}
                 </select>
               </div>
-
               <div className="space-y-1.5">
                 <Label>Quận/Huyện</Label>
                 <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  disabled={!formData.province}
                   value={formData.district}
                   onChange={(e) =>
                     setFormData({
@@ -389,39 +300,35 @@ const AddressSection = () => {
                       commune: "",
                     })
                   }
-                  disabled={!formData.province}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">Chọn Quận/Huyện</option>
-                  {districts.map((dist) => (
-                    <option key={dist} value={dist}>
-                      {dist}
+                  {districts.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
                     </option>
                   ))}
                 </select>
               </div>
-
               <div className="space-y-1.5">
-                <Label>Phường/Xã</Label>
+                <Label>Phường/Xã (Commune)</Label>
                 <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  disabled={!formData.district}
                   value={formData.commune}
                   onChange={(e) =>
                     setFormData({ ...formData, commune: e.target.value })
                   }
-                  disabled={!formData.district}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">Chọn Phường/Xã</option>
-                  {wards.map((ward) => (
-                    <option key={ward} value={ward}>
-                      {ward}
+                  {wards.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
                     </option>
                   ))}
                 </select>
               </div>
-
               <div className="space-y-1.5 md:col-span-2">
-                <Label>Địa chỉ cụ thể</Label>
+                <Label>Địa chỉ cụ thể (Detail)</Label>
                 <Input
                   value={formData.detail}
                   onChange={(e) =>
@@ -432,7 +339,7 @@ const AddressSection = () => {
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-muted/30">
+            <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setIsFormOpen(false)}>
                 Hủy
               </Button>
@@ -442,7 +349,7 @@ const AddressSection = () => {
               >
                 {(addMutation.isPending || updateMutation.isPending) && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                )}{" "}
+                )}
                 Hoàn thành
               </Button>
             </div>
@@ -450,34 +357,29 @@ const AddressSection = () => {
         </div>
       )}
 
-      {/* --- MODAL XÁC NHẬN XÓA --- */}
+      {/* MODAL CONFIRM DELETE */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-opacity">
-          <div className="bg-card w-full max-w-md rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-destructive" />
-            </div>
-            <h3 className="text-xl font-bold text-foreground mb-2">
-              Xác nhận xóa
-            </h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-card w-full max-w-md rounded-2xl p-6 text-center">
+            <AlertTriangle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Xác nhận xóa</h3>
             <p className="text-muted-foreground mb-6">
-              Bạn có chắc chắn muốn xóa địa chỉ này? Hành động này không thể
-              hoàn tác.
+              Bạn có chắc muốn xóa địa chỉ này?
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex gap-3">
               <Button
                 variant="outline"
                 className="flex-1"
                 onClick={() => setDeleteConfirmId(null)}
               >
-                Hủy bỏ
+                Hủy
               </Button>
               <Button
                 variant="destructive"
                 className="flex-1"
                 onClick={() => deleteMutation.mutate(deleteConfirmId)}
               >
-                Xóa địa chỉ
+                Xác nhận Xóa
               </Button>
             </div>
           </div>

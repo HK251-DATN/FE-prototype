@@ -1,48 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
-import { mockOrders, Order } from "@/data/mockData";
 import OrderDetail from "./OrderDetail";
+import { orderApi } from "@/api/ecommerceApi";
 
 const statusMap = {
-  processing: {
-    label: "Đang xử lý",
+  PENDING: {
+    label: "Chờ xử lý",
     className: "bg-warning/10 text-warning border-warning/30",
   },
-  shipping: {
+  PAID: {
+    label: "Đã thanh toán",
+    className: "bg-info/10 text-info border-info/30",
+  },
+  CONFIRMED: {
+    label: "Đã xác nhận",
+    className: "bg-warning/10 text-warning border-warning/30",
+  },
+  PACKAGED: {
+    label: "Đã đóng gói",
+    className: "bg-primary/10 text-primary border-primary/30",
+  },
+  SHIPPED: {
     label: "Đang giao",
     className: "bg-primary/10 text-primary border-primary/30",
   },
-  completed: {
+  COMPLETED: {
     label: "Hoàn thành",
     className: "bg-success/10 text-success border-success/30",
   },
-  cancelled: {
+  CANCELLED: {
     label: "Đã hủy",
     className: "bg-destructive/10 text-destructive border-destructive/30",
   },
 };
 
 const statusTabs = [
-  { id: "all", label: "Tất cả" },
-  { id: "processing", label: "Đang xử lý" },
-  { id: "shipping", label: "Đang giao" },
-  { id: "completed", label: "Hoàn thành" },
-  { id: "cancelled", label: "Đã hủy" },
+  { id: "ALL", label: "Tất cả" },
+  { id: "PENDING", label: "Chờ xử lý" },
+  { id: "SHIPPED", label: "Đang giao" },
+  { id: "COMPLETED", label: "Hoàn thành" },
+  { id: "CANCELLED", label: "Đã hủy" },
 ];
 
 const OrdersSection = () => {
-  const [activeStatus, setActiveStatus] = useState("all");
-  const [selectedOrder, setSelectedOrder] = (useState < Order) | (null > null);
+  const [activeStatus, setActiveStatus] = useState("ALL");
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const res = await orderApi.getOrders(1, 100);
+        if (res.detail) {
+          setOrders(res.detail);
+        } else {
+          setOrders([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch orders", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const filteredOrders =
-    activeStatus === "all"
-      ? mockOrders
-      : mockOrders.filter((o) => o.status === activeStatus);
+    activeStatus === "ALL"
+      ? orders
+      : orders.filter((o) => o.status === activeStatus);
 
   if (selectedOrder) {
     return (
       <OrderDetail
-        order={selectedOrder}
+        orderId={selectedOrder.orderId}
         onBack={() => setSelectedOrder(null)}
       />
     );
@@ -80,43 +114,44 @@ const OrdersSection = () => {
           <span className="text-right">Chi tiết</span>
         </div>
 
-        <div className="divide-y divide-border">
-          {filteredOrders.map((order) => {
-            const status = statusMap[order.status];
-            return (
-              <div
-                key={order.id}
-                className="grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-4 py-4 items-center"
-              >
-                <span className="font-semibold text-foreground">
-                  {order.id}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {order.date}
-                </span>
-                <span className="text-sm font-medium text-foreground">
-                  {order.total.toLocaleString()}đ{" "}
-                  <span className="text-muted-foreground">
-                    ({order.productCount} SP)
-                  </span>
-                </span>
-                <Badge variant="outline" className={status.className}>
-                  {status.label}
-                </Badge>
-                <button
-                  onClick={() => setSelectedOrder(order)}
-                  className="text-sm text-primary font-medium hover:underline md:text-right"
+        {loading ? (
+          <div className="py-12 text-center text-muted-foreground">Đang tải...</div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filteredOrders.map((order) => {
+              const status = statusMap[order.status] || statusMap["PENDING"];
+              return (
+                <div
+                  key={order.orderId}
+                  className="grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-4 py-4 items-center"
                 >
-                  Xem chi tiết
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                  <span className="font-semibold text-foreground">
+                    #{order.orderId}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                  </span>
+                  <span className="text-sm font-medium text-foreground">
+                    {order.totalPrice ? order.totalPrice.toLocaleString() : 0}đ
+                  </span>
+                  <Badge variant="outline" className={status.className}>
+                    {status.label}
+                  </Badge>
+                  <button
+                    onClick={() => setSelectedOrder(order)}
+                    className="text-sm text-primary font-medium hover:underline md:text-right"
+                  >
+                    Xem chi tiết
+                  </button>
+                </div>
+              );
+            })}
 
-        {filteredOrders.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">
-            Không có đơn hàng nào.
+            {filteredOrders.length === 0 && (
+              <div className="py-12 text-center text-muted-foreground">
+                Không có đơn hàng nào.
+              </div>
+            )}
           </div>
         )}
       </div>
