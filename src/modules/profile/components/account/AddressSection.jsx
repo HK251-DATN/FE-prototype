@@ -12,27 +12,75 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { mockAddresses } from "@/modules/profile/components/account/mockData";
 import { addressApi } from "@/api/ecommerceApi";
 import { toast } from "react-toastify";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import provinces from "@/modules/profile/components/account/AddressData/province_old.json";
+import districts from "@/modules/profile/components/account/AddressData/district_old.json";
+import wards from "@/modules/profile/components/account/AddressData/ward_old.json";
 
-// --- MOCK DATA: Giả lập dữ liệu Tỉnh/Huyện/Xã ---
-// Trong thực tế, bạn sẽ gọi API (ví dụ: API của Giao Hàng Nhanh) để lấy danh sách này
-const locationData = {
-  "Hồ Chí Minh": {
-    "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Đa Kao"],
-    "Quận 7": ["Phường Tân Phong", "Phường Tân Quy", "Phường Phú Mỹ"],
-  },
-  "Hà Nội": {
-    "Quận Cầu Giấy": ["Phường Dịch Vọng", "Phường Mai Dịch"],
-    "Quận Đống Đa": ["Phường Láng Hạ", "Phường Ô Chợ Dừa"],
-  },
-};
+const provinceList = Object.values(provinces);
+const districtList = Object.values(districts);
+const wardList = Object.values(wards);
 
 const AddressSection = () => {
-  // const [addresses, setAddresses] = useState(mockAddresses);
+  const [selectedProvince, setSelectedProvince] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedWard, setSelectedWard] = useState("");
   const queryClient = useQueryClient();
+
+  // 1. Danh sách huyện sẽ thay đổi khi tỉnh thay đổi
+  const availableDistricts = districtList.filter(d => d.parent_code === selectedProvince);
+
+  // 2. Danh sách xã sẽ thay đổi khi huyện thay đổi
+  const availableWards = wardList.filter(w => w.parent_code === selectedDistrict);
+
+  // Hàm xử lý khi chọn Tỉnh
+  const handleProvinceChange = (e) => {
+    const selectedProvinceData = provinceList.find(p => p.code === e.target.value);
+    setFormData(prev => ({
+      ...prev,
+      province: selectedProvinceData ? selectedProvinceData.name_with_type : ""
+    }));
+    setSelectedProvince(e.target.value);
+    setSelectedDistrict(""); // Reset huyện khi đổi tỉnh
+    setSelectedWard("");     // Reset xã khi đổi tỉnh
+  };
+
+  // Hàm xử lý khi chọn Huyện
+  const handleDistrictChange = (e) => {
+    const selectedDistrictData = districtList.find(d => d.code === e.target.value);
+    setFormData(prev => ({
+      ...prev,
+      district: selectedDistrictData ? selectedDistrictData.name_with_type : ""
+    }));
+    setSelectedDistrict(e.target.value);
+    setSelectedWard("");     // Reset xã khi đổi huyện
+  };
+
+  const handleWardChange = (e) => {
+    const selectedWardData = availableWards.find(w => w.code === e.target.value);
+    setFormData(prev => ({
+      ...prev,
+      commune: selectedWardData ? selectedWardData.name_with_type : ""
+    }));
+    setSelectedWard(e.target.value);
+  };
+
+  const provinceOptions = useMemo(() => provinceList.map(p => ({
+    value: p.code,
+    label: p.name_with_type
+  })), []);
+
+  const districtOptions = useMemo(() => availableDistricts.map(d => ({
+    value: d.code,
+    label: d.name_with_type
+  })), [availableDistricts]);
+
+  const wardOptions = useMemo(() => availableWards.map(w => ({
+    value: w.code,
+    label: w.name_with_type
+  })), [availableWards]);
 
   // --- STATES QUẢN LÝ POPUP & FORM ---
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -101,78 +149,7 @@ const AddressSection = () => {
     },
   });
 
-  // --- LOGIC: Dropdown Tỉnh/Huyện/Xã ---
-  // const provinces = Object.keys(locationData);
-  // const districts = formData.province
-  //   ? Object.keys(locationData[formData.province])
-  //   : [];
-  // const wards =
-  //   formData.province && formData.district
-  //     ? locationData[formData.province][formData.district]
-  //     : [];
-
-  // const handleProvinceChange = (e) => {
-  //   setFormData({
-  //     ...formData,
-  //     province: e.target.value,
-  //     district: "",
-  //     ward: "",
-  //   });
-  // };
-
-  // const handleDistrictChange = (e) => {
-  //   setFormData({ ...formData, district: e.target.value, ward: "" });
-  // };
-
-  // // --- ACTIONS ---
-  // const openAddForm = () => {
-  //   setFormData({
-  //     id: "",
-  //     name: "",
-  //     phone: "",
-  //     address: "",
-  //     province: "",
-  //     district: "",
-  //     ward: "",
-  //     isDefault: false,
-  //   });
-  //   setFormMode("add");
-  //   setIsFormOpen(true);
-  // };
-
-  // const openEditForm = (addr) => {
-  //   setFormData(addr);
-  //   setFormMode("edit");
-  //   setIsFormOpen(true);
-  // };
-
-  // const handleSave = () => {
-  //   if (formMode === "add") {
-  //     const newAddr = { ...formData, id: Date.now().toString() };
-  //     // Nếu là địa chỉ đầu tiên, tự động set mặc định
-  //     if (addresses.length === 0) newAddr.isDefault = true;
-  //     setAddresses([...addresses, newAddr]);
-  //   } else {
-  //     setAddresses(addresses.map((a) => (a.id === formData.id ? formData : a)));
-  //   }
-  //   setIsFormOpen(false);
-  // };
-
-  // const setDefault = (id) => {
-  //   setAddresses(addresses.map((a) => ({ ...a, isDefault: a.id === id })));
-  // };
-
-  const provinces = Object.keys(locationData);
-  const districts = formData.province
-    ? Object.keys(locationData[formData.province] || {})
-    : [];
-  const wards =
-    formData.province && formData.district
-      ? locationData[formData.province][formData.district]
-      : [];
-
   const handleSave = () => {
-    // Validate cơ bản
     if (!formData.receiverName || !formData.receiverPNum) {
       return toast.warning("Vui lòng điền đầy đủ thông tin!");
     }
@@ -186,6 +163,14 @@ const AddressSection = () => {
 
   const openEditForm = (addr) => {
     setFormData(addr);
+    const p = provinceList.find(item => item.name_with_type === addr.province);
+    const d = districtList.find(item => item.name_with_type === addr.district);
+    const w = wardList.find(item => item.name_with_type === addr.commune);
+
+    setSelectedProvince(p ? p.code : "");
+    setSelectedDistrict(d ? d.code : "");
+    setSelectedWard(w ? w.code : "");
+
     setFormMode("edit");
     setIsFormOpen(true);
   };
@@ -205,10 +190,6 @@ const AddressSection = () => {
     setIsFormOpen(true);
   };
 
-  // const confirmDelete = () => {
-  //   setAddresses(addresses.filter((a) => a.id !== deleteConfirmId));
-  //   setDeleteConfirmId(null);
-  // };
   if (isLoading)
     return (
       <div className="flex justify-center p-20">
@@ -244,11 +225,10 @@ const AddressSection = () => {
         {sortedAddresses.map((addr) => (
           <div
             key={addr.addressId}
-            className={`p-5 rounded-xl border transition-all duration-200 hover:shadow-md ${
-              addr.isDefault
-                ? "border-primary/50 bg-primary/5"
-                : "border-border bg-card"
-            }`}
+            className={`p-5 rounded-xl border transition-all duration-200 hover:shadow-md ${addr.isDefault
+              ? "border-primary/50 bg-primary/5"
+              : "border-border bg-card"
+              }`}
           >
             <div className="flex flex-col sm:flex-row justify-between gap-4">
               <div className="space-y-2 flex-1">
@@ -358,21 +338,14 @@ const AddressSection = () => {
               <div className="space-y-1.5">
                 <Label>Tỉnh/Thành phố</Label>
                 <select
-                  value={formData.province}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      province: e.target.value,
-                      district: "",
-                      commune: "",
-                    })
-                  }
+                  value={selectedProvince}
+                  onChange={handleProvinceChange}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">Chọn Tỉnh/Thành phố</option>
-                  {provinces.map((prov) => (
-                    <option key={prov} value={prov}>
-                      {prov}
+                  {provinceList.map((prov) => (
+                    <option key={prov.code} value={prov.code}>
+                      {prov.name_with_type}
                     </option>
                   ))}
                 </select>
@@ -381,21 +354,15 @@ const AddressSection = () => {
               <div className="space-y-1.5">
                 <Label>Quận/Huyện</Label>
                 <select
-                  value={formData.district}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      district: e.target.value,
-                      commune: "",
-                    })
-                  }
-                  disabled={!formData.province}
+                  value={selectedDistrict}
+                  onChange={handleDistrictChange}
+                  disabled={!selectedProvince}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">Chọn Quận/Huyện</option>
-                  {districts.map((dist) => (
-                    <option key={dist} value={dist}>
-                      {dist}
+                  {availableDistricts.map((dist) => (
+                    <option key={dist.code} value={dist.code}>
+                      {dist.name_with_type}
                     </option>
                   ))}
                 </select>
@@ -404,17 +371,15 @@ const AddressSection = () => {
               <div className="space-y-1.5">
                 <Label>Phường/Xã</Label>
                 <select
-                  value={formData.commune}
-                  onChange={(e) =>
-                    setFormData({ ...formData, commune: e.target.value })
-                  }
-                  disabled={!formData.district}
+                  value={selectedWard}
+                  onChange={handleWardChange}
+                  disabled={!selectedDistrict}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">Chọn Phường/Xã</option>
-                  {wards.map((ward) => (
-                    <option key={ward} value={ward}>
-                      {ward}
+                  {availableWards.map((ward) => (
+                    <option key={ward.code} value={ward.code}>
+                      {ward.name_with_type}
                     </option>
                   ))}
                 </select>
