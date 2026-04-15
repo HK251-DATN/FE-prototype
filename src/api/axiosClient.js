@@ -26,4 +26,4 @@ const createInstance = (baseURL) => {
 // Khởi tạo các instance cho từng dịch vụ
 export const identityClient = createInstance("http://localhost:9000");
 export const backofficeClient = createInstance("http://localhost:9100");
-export const ecommerceClient = createInstance("http://localhost:9301");
+export const ecommerceClient = createInstance("http://localhost:9300");
